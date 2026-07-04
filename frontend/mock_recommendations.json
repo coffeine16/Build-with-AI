@@ -1,0 +1,68 @@
+[
+  {
+    "id": 1,
+    "title": "Repair leaking roof — Govt Sr. Sec. School, Ward 4",
+    "ward_name": "Ward 4",
+    "category": "education",
+    "dps": 78.2,
+    "dps_class": "High",
+    "n_submissions": 41,
+    "n_voice": 12,
+    "components": { "demand": 19.5, "evidence_gap": 31.2, "equity": 16.0, "recurrence": 11.5 },
+    "explanation": [
+      "Evidence gap +31.2 pts (enrollment at 140% of classroom capacity, UDISE+ 2024)",
+      "Citizen demand +19.5 pts (41 citizens, 12 via voice, debiased)",
+      "Equity +16.0 pts (ward in bottom quartile on amenity index)",
+      "Recurrence +11.5 pts (raised in 9 of last 24 weeks)"
+    ],
+    "est_cost_inr": 850000,
+    "scheme_id": "samagra_shiksha",
+    "mp_action": "Recommend to District Education Officer under Samagra Shiksha AWP&B",
+    "silent_need": false,
+    "lat": 26.9124, "lng": 75.7873
+  },
+  {
+    "id": 2,
+    "title": "Piped water connection extension — Ward 11",
+    "ward_name": "Ward 11",
+    "category": "water",
+    "dps": 71.4,
+    "dps_class": "High",
+    "n_submissions": 6,
+    "n_voice": 5,
+    "components": { "demand": 9.8, "evidence_gap": 33.0, "equity": 20.0, "recurrence": 8.6 },
+    "explanation": [
+      "Evidence gap +33.0 pts (0% tap connection coverage, JJM 2024)",
+      "Equity +20.0 pts (ward flagged as under-voiced relative to measured need)",
+      "Citizen demand +9.8 pts (only 6 citizens raised it, but heavily up-weighted)",
+      "Recurrence +8.6 pts (raised in 5 of last 24 weeks)"
+    ],
+    "est_cost_inr": 1800000,
+    "scheme_id": "jjm",
+    "mp_action": "Forward to district PHED for JJM village action plan inclusion",
+    "silent_need": true,
+    "lat": 26.9250, "lng": 75.8020
+  },
+  {
+    "id": 3,
+    "title": "Pothole repair — Main road, Ward 7",
+    "ward_name": "Ward 7",
+    "category": "roads",
+    "dps": 54.0,
+    "dps_class": "Medium",
+    "n_submissions": 68,
+    "n_voice": 4,
+    "components": { "demand": 28.0, "evidence_gap": 12.0, "equity": 4.0, "recurrence": 10.0 },
+    "explanation": [
+      "Citizen demand +28.0 pts (68 citizens — highest raw volume, but low equity weight)",
+      "Evidence gap +12.0 pts (moderate connectivity deficit, PMGSY)",
+      "Recurrence +10.0 pts (raised in 6 of last 24 weeks)",
+      "Equity +4.0 pts (ward already well-connected relative to others)"
+    ],
+    "est_cost_inr": 650000,
+    "scheme_id": "mplads",
+    "mp_action": "Recommend to District Collector under MPLADS",
+    "silent_need": false,
+    "lat": 26.9050, "lng": 75.7690
+  }
+]

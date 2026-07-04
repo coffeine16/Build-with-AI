@@ -1,0 +1,18 @@
+{
+  "id": "mplads",
+  "version": 1,
+  "config": {
+    "name": { "en": "Member of Parliament Local Area Development Scheme", "hi": "सांसद स्थानीय क्षेत्र विकास योजना" },
+    "annual_ceiling_inr": 50000000,
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "in", "value": ["education", "water", "roads", "health", "electricity", "sanitation"] },
+        { "field": "est_cost_inr", "op": "lte", "value": 5000000 },
+        { "field": "asset_type", "op": "eq", "value": "durable_community_asset" }
+      ]
+    },
+    "mp_action": "Recommend the work to the District Collector under MPLADS guidelines, citing the evidence and citizen demand summary.",
+    "notes": "Durable community assets only; cannot fund recurring/maintenance costs or private property."
+  },
+  "active": true
+}

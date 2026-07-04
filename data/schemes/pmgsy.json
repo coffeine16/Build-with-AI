@@ -1,0 +1,16 @@
+{
+  "id": "pmgsy",
+  "version": 1,
+  "config": {
+    "name": { "en": "Pradhan Mantri Gram Sadak Yojana", "hi": "प्रधानमंत्री ग्राम सड़क योजना" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "eq", "value": "roads" },
+        { "field": "sub_type", "op": "in", "value": ["habitation_connectivity", "road_repair", "all_weather_road"] }
+      ]
+    },
+    "mp_action": "Forward to the PMGSY district implementation unit for habitation connectivity survey.",
+    "notes": "Targets unconnected/under-connected rural habitations per the PMGSY core network."
+  },
+  "active": true
+}

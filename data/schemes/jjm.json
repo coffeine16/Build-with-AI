@@ -1,0 +1,16 @@
+{
+  "id": "jjm",
+  "version": 1,
+  "config": {
+    "name": { "en": "Jal Jeevan Mission", "hi": "जल जीवन मिशन" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "eq", "value": "water" },
+        { "field": "sub_type", "op": "in", "value": ["tap_connection", "piped_water_extension", "water_quality"] }
+      ]
+    },
+    "mp_action": "Forward to the district Public Health Engineering Department (PHED) for inclusion in the JJM village action plan.",
+    "notes": "Primarily rural/peri-urban habitations; check village coverage status before recommending."
+  },
+  "active": true
+}

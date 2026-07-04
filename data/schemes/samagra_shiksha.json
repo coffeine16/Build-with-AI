@@ -1,0 +1,16 @@
+{
+  "id": "samagra_shiksha",
+  "version": 1,
+  "config": {
+    "name": { "en": "Samagra Shiksha Abhiyan", "hi": "समग्र शिक्षा अभियान" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "eq", "value": "education" },
+        { "field": "sub_type", "op": "in", "value": ["infrastructure_repair", "new_classroom", "toilet", "drinking_water", "electricity"] }
+      ]
+    },
+    "mp_action": "Recommend to the District Education Officer for inclusion in the Samagra Shiksha annual work plan (AWP&B).",
+    "notes": "Government/government-aided schools only. Cite UDISE+ enrollment/infrastructure gap in the justification."
+  },
+  "active": true
+}
