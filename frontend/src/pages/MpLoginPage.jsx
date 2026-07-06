@@ -32,8 +32,8 @@ export default function MpLoginPage({ onLogin }) {
   return (
     <main className="screen screen-login">
       <Card className="auth-card mp-auth-card">
-        <p className="kicker">MP Login</p>
-        <h1>Constituency action cockpit</h1>
+        <p className="kicker">MP Cockpit Login</p>
+        <h1>Constituency action workspace</h1>
         <p className="subtitle">Review priority signals and move issues from demand to execution.</p>
 
         <form className="stack" onSubmit={handleSubmit}>
@@ -58,12 +58,18 @@ export default function MpLoginPage({ onLogin }) {
             <input
               required
               type="password"
+              placeholder="Use passcode MP1234"
               value={form.passcode}
               onChange={(event) => setForm((prev) => ({ ...prev, passcode: event.target.value }))}
             />
           </Field>
 
-          <Button variant="secondary" type="submit">Enter MP Dashboard</Button>
+          <Button variant="secondary" type="submit" size="lg" className="w-full">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Enter Dashboard Workspace
+          </Button>
           {error && <p className="error-text">{error}</p>}
         </form>
       </Card>

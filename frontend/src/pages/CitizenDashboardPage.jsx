@@ -96,26 +96,58 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
     }
   };
 
+  const getChannelIcon = (channel) => {
+    if (channel === "voice") {
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '4px'}}>
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/>
+        </svg>
+      );
+    }
+    if (channel === "photo") {
+      return (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '4px'}}>
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+      );
+    }
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '4px'}}>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    );
+  };
+
   return (
     <main className="screen">
       <header className="topbar vibrant-topbar">
         <div>
-          <p className="kicker">Client Dashboard</p>
-          <h1>Hi {session.fullName}, your ward pulse is live</h1>
-          <p className="subtitle">Ward: {session.ward_name}</p>
+          <p className="kicker">Client Workspace</p>
+          <h1>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '10px'}}>
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            Hi {session.fullName}, your ward pulse is live
+          </h1>
+          <p className="subtitle">Constituency Ward Scope: {session.ward_name}</p>
         </div>
         <div className="topbar-stats">
           <div className="topbar-stat">
-            <span>Open signals</span>
+            <span>Open Signals</span>
             <strong>{wardRecommendations.length}</strong>
           </div>
           <div className="topbar-stat">
-            <span>Avg DPS</span>
+            <span>Avg Ward DPS</span>
             <strong>{wardAvgDps}</strong>
           </div>
-        </div>
-        <div className="row-actions">
-          <Button variant="ghost" onClick={onLogout}>Log out</Button>
+          <Button variant="ghost" onClick={onLogout} size="sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Log out
+          </Button>
         </div>
       </header>
 
@@ -133,20 +165,20 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
               <textarea
                 required
                 minLength={10}
-                placeholder="Describe the problem and exact location"
+                placeholder="Describe the issue in detail, including specific landmarks or locations..."
                 value={newIssue.message}
                 onChange={(event) => setNewIssue((prev) => ({ ...prev, message: event.target.value }))}
               />
             </Field>
 
-            <Field label="Channel">
+            <Field label="Submission Channel">
               <select
                 value={newIssue.channel}
                 onChange={(event) => setNewIssue((prev) => ({ ...prev, channel: event.target.value }))}
               >
-                <option value="text">Text</option>
-                <option value="voice">Voice</option>
-                <option value="photo">Photo</option>
+                <option value="text">Text Message</option>
+                <option value="voice">Voice Recording / IVR</option>
+                <option value="photo">Photo / Attachment</option>
               </select>
             </Field>
 
@@ -156,14 +188,28 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
                 checked={newIssue.shareLocation}
                 onChange={(event) => setNewIssue((prev) => ({ ...prev, shareLocation: event.target.checked }))}
               />
-              <span>Share my location with this report</span>
+              <span>Share my browser GPS coordinates with this report</span>
             </label>
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit"}
+            <Button type="submit" disabled={isSubmitting} variant="default" size="lg" className="w-full">
+              {isSubmitting ? (
+                "Submitting Signal..."
+              ) : (
+                <>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"/>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                  </svg>
+                  Submit Civic Signal
+                </>
+              )}
             </Button>
           </form>
-          {ackText && <p className="ack">{ackText}</p>}
+          {ackText && (
+            <p className={ackText.toLowerCase().includes("could not") ? "error-text" : "ack"}>
+              {ackText}
+            </p>
+          )}
         </Card>
 
         <Card className="panel-card">
@@ -174,17 +220,24 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
             </div>
             <Badge tone="green">Actionable</Badge>
           </div>
-          <div className="stack compact">
-            {wardRecommendations.length === 0 && <p className="empty-state">No updates yet for your ward.</p>}
+          <div className="stack compact scroll-list">
+            {wardRecommendations.length === 0 && (
+              <p className="empty-state">No active civic updates yet for {session.ward_name}.</p>
+            )}
             {wardRecommendations.map((item) => (
               <article key={item.id} className="tile">
                 <div className="tile-head">
                   <strong>{item.title}</strong>
-                  <Badge tone={item.dps_class.toLowerCase() === "high" ? "green" : "orange"}>
-                    {item.dps_class} {item.dps}
+                  <Badge tone={item.dps_class.toLowerCase() === "high" ? "orange" : "slate"}>
+                    DPS {item.dps}
                   </Badge>
                 </div>
                 <p>{item.mp_action}</p>
+                <div className="tile-inline">
+                  <Badge tone="blue">{item.category}</Badge>
+                  {item.silent_need && <Badge tone="violet">Silent Need</Badge>}
+                  <span className="muted">{item.n_submissions} signals received</span>
+                </div>
               </article>
             ))}
           </div>
@@ -198,13 +251,14 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
               <h2>Top Themes Across City</h2>
               <p className="subtitle">What the platform is hearing most strongly.</p>
             </div>
+            <Badge tone="slate">City Pulse</Badge>
           </div>
           <div className="stack compact">
             {topThemes.map((theme) => (
               <article key={theme.category} className="metric-row">
                 <span className="category">{theme.category}</span>
-                <span>{theme.count} issues</span>
-                <strong>Avg DPS {theme.avgDps}</strong>
+                <span>{theme.count} active clusters</span>
+                <strong>Avg Priority: {theme.avgDps}</strong>
               </article>
             ))}
           </div>
@@ -218,14 +272,19 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
             </div>
             <Badge tone="slate">{submissions.length} saved</Badge>
           </div>
-          <div className="stack compact">
-            {submissions.length === 0 && <p className="empty-state">No submissions yet.</p>}
+          <div className="stack compact scroll-list">
+            {submissions.length === 0 && (
+              <p className="empty-state">No submissions recorded during this session.</p>
+            )}
             {submissions.map((item) => (
               <article key={item.id} className="tile">
                 <p>{item.text}</p>
-                <span className="muted">
-                  {item.channel} | {new Date(item.createdAt).toLocaleString()}
-                </span>
+                <div className="tile-inline">
+                  <span className="muted">
+                    {getChannelIcon(item.channel)}
+                    {item.channel.toUpperCase()} | {new Date(item.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
               </article>
             ))}
           </div>

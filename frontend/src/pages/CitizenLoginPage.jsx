@@ -25,7 +25,7 @@ export default function CitizenLoginPage({ onLogin }) {
   return (
     <main className="screen screen-login">
       <Card className="auth-card">
-        <p className="kicker">Client Login</p>
+        <p className="kicker">Client Access</p>
         <h1>Raise local issues with context</h1>
         <p className="subtitle">
           Enter your ward details to open the client workspace and submit a
@@ -48,7 +48,7 @@ export default function CitizenLoginPage({ onLogin }) {
             <input
               required
               pattern="[0-9]{10}"
-              placeholder="10 digit mobile"
+              placeholder="e.g. 9876543210"
               value={form.phone}
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, phone: event.target.value }))
@@ -56,7 +56,7 @@ export default function CitizenLoginPage({ onLogin }) {
             />
           </Field>
 
-          <Field label="Ward">
+          <Field label="Your Ward Area">
             <select
               value={form.ward_name}
               onChange={(event) =>
@@ -71,7 +71,12 @@ export default function CitizenLoginPage({ onLogin }) {
             </select>
           </Field>
 
-          <Button type="submit">Continue to Citizen Dashboard</Button>
+          <Button type="submit" variant="default" size="lg" className="w-full">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+            </svg>
+            Continue to Dashboard
+          </Button>
         </form>
       </Card>
     </main>

@@ -19,6 +19,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
   const [wardFilter, setWardFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [activeIssueId, setActiveIssueId] = useState(null);
   const [noteDraft, setNoteDraft] = useState("");
 
@@ -38,9 +39,12 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
       const wardOk = wardFilter === "all" || issue.ward_name === wardFilter;
       const categoryOk = categoryFilter === "all" || issue.category === categoryFilter;
       const statusOk = statusFilter === "all" || issue.status === statusFilter;
-      return wardOk && categoryOk && statusOk;
+      const searchOk = searchQuery.trim() === "" || 
+        issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        issue.mp_action.toLowerCase().includes(searchQuery.toLowerCase());
+      return wardOk && categoryOk && statusOk && searchOk;
     });
-  }, [enriched, wardFilter, categoryFilter, statusFilter]);
+  }, [enriched, wardFilter, categoryFilter, statusFilter, searchQuery]);
 
   const statusCounts = useMemo(() => {
     return statusOrder.reduce((acc, key) => {
@@ -88,30 +92,81 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
     setMpIssueActions(next);
   };
 
+  const getTimelineStepStyle = (stepNumber, currentStatus) => {
+    let isComplete = false;
+    let isActive = false;
+
+    if (stepNumber === 1) {
+      isComplete = true; 
+    } else if (stepNumber === 2) {
+      if (currentStatus !== "new") isComplete = true;
+      else isActive = true;
+    } else if (stepNumber === 3) {
+      if (currentStatus === "resolved") isComplete = true;
+      else if (["taken_up", "in_progress", "parked"].includes(currentStatus)) isActive = true;
+    } else if (stepNumber === 4) {
+      if (currentStatus === "resolved") isActive = true;
+    }
+
+    if (isComplete) {
+      return {
+        borderColor: "var(--teal)",
+        backgroundColor: "rgba(16, 185, 129, 0.08)",
+        color: "#fff"
+      };
+    }
+    if (isActive) {
+      return {
+        borderColor: "var(--brand-light)",
+        backgroundColor: "rgba(94, 106, 210, 0.15)",
+        color: "#fff",
+        boxShadow: "0 0 10px rgba(94, 106, 210, 0.1)"
+      };
+    }
+    return {
+      borderColor: "var(--line)",
+      opacity: 0.5
+    };
+  };
+
+  const formatCost = (val) => {
+    if (val >= 10000000) return `₹ ${(val / 10000000).toFixed(1)} Cr`;
+    if (val >= 100000) return `₹ ${(val / 100000).toFixed(1)} Lakh`;
+    return `₹ ${val.toLocaleString()}`;
+  };
+
   return (
     <main className="screen">
       <header className="topbar mp-topbar">
         <div>
-          <p className="kicker">MP Dashboard</p>
-          <h1>{session.fullName} | {session.constituency}</h1>
-          <p className="subtitle">Prioritize high-impact issues and move them to execution.</p>
+          <p className="kicker">MP Executive Workspace</p>
+          <h1>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '10px'}}>
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            {session.fullName} | {session.constituency} Constituency
+          </h1>
+          <p className="subtitle">Prioritize high-impact public issues and track their execution pipeline.</p>
         </div>
         <div className="topbar-stats">
           <div className="topbar-stat">
-            <span>Priority issues</span>
+            <span>Priority Issues</span>
             <strong>{dashboardSignals.highPriority}</strong>
           </div>
           <div className="topbar-stat">
-            <span>Citizen signals</span>
+            <span>Total Signals</span>
             <strong>{dashboardSignals.submissions}</strong>
           </div>
           <div className="topbar-stat">
-            <span>Silent needs</span>
+            <span>Silent Needs</span>
             <strong>{dashboardSignals.silentNeeds}</strong>
           </div>
-        </div>
-        <div className="row-actions">
-          <Button variant="ghost" onClick={onLogout}>Log out</Button>
+          <Button variant="ghost" onClick={onLogout} size="sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+            </svg>
+            Log out
+          </Button>
         </div>
       </header>
 
@@ -129,37 +184,50 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
           <div className="panel-heading">
             <div>
               <h2>Issue Queue</h2>
-              <p className="subtitle">Sorted by decision priority score.</p>
+              <p className="subtitle">Scored by Decision Priority Score (DPS).</p>
             </div>
-            <Badge tone="blue">{filtered.length} visible</Badge>
+            <Badge tone="blue">{filtered.length} active</Badge>
           </div>
-          <div className="filters-row">
-            <Field label="Ward">
-              <select value={wardFilter} onChange={(event) => setWardFilter(event.target.value)}>
-                <option value="all">All wards</option>
-                {wards.map((ward) => (
-                  <option key={ward} value={ward}>{ward}</option>
-                ))}
-              </select>
+
+          <div className="stack compact" style={{ marginBottom: "1.25rem" }}>
+            <Field label="Search Title or Action">
+              <input
+                type="text"
+                placeholder="Search issues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ marginBottom: "0.5rem" }}
+              />
             </Field>
 
-            <Field label="Category">
-              <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-                <option value="all">All categories</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </Field>
+            <div className="filters-row">
+              <Field label="Ward">
+                <select value={wardFilter} onChange={(event) => setWardFilter(event.target.value)}>
+                  <option value="all">All Wards</option>
+                  {wards.map((ward) => (
+                    <option key={ward} value={ward}>{ward}</option>
+                  ))}
+                </select>
+              </Field>
 
-            <Field label="Status">
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-                <option value="all">All statuses</option>
-                {statusOrder.map((statusKey) => (
-                  <option key={statusKey} value={statusKey}>{statusLabels[statusKey]}</option>
-                ))}
-              </select>
-            </Field>
+              <Field label="Category">
+                <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+                  <option value="all">All Themes</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="Status">
+                <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+                  <option value="all">All Statuses</option>
+                  {statusOrder.map((statusKey) => (
+                    <option key={statusKey} value={statusKey}>{statusLabels[statusKey]}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
           </div>
 
           <div className="stack compact scroll-list">
@@ -176,7 +244,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
                   <strong>{issue.title}</strong>
                   <Badge tone={getStatusTone(issue.status)}>{statusLabels[issue.status]}</Badge>
                 </div>
-                <p>{issue.ward_name} | DPS {issue.dps}</p>
+                <p style={{fontSize: "0.8rem", color: "var(--muted)"}}>{issue.ward_name} | theme: {issue.category}</p>
                 <div className="tile-inline">
                   <Badge tone={issue.silent_need ? "violet" : "blue"}>
                     {issue.silent_need ? "Silent Need" : "Citizen Demand"}
@@ -184,7 +252,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
                   <Badge tone={issue.dps_class.toLowerCase() === "high" ? "orange" : "slate"}>
                     DPS {issue.dps}
                   </Badge>
-                  <span>{issue.n_submissions} submissions</span>
+                  <span>{issue.n_submissions} submissions ({issue.n_voice} voice)</span>
                 </div>
               </article>
             ))}
@@ -196,64 +264,87 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
           <div className="panel-heading">
             <div>
               <h2>Action Center</h2>
-              <p className="subtitle">Move the selected signal into a real-world response.</p>
+              <p className="subtitle">Execute transitions and allocate resources.</p>
             </div>
             {activeIssue && <Badge tone={getStatusTone(activeIssue.status)}>{statusLabels[activeIssue.status]}</Badge>}
           </div>
-          {!activeIssue && <p className="empty-state">Select an issue from the queue.</p>}
+          {!activeIssue && <p className="empty-state">Select an issue from the queue to process.</p>}
           {activeIssue && (
             <div className="stack">
-              <div className="tile">
+              <div className="tile" style={{ background: "rgba(255, 255, 255, 0.02)", borderStyle: "solid" }}>
                 <div className="tile-head">
-                  <strong>{activeIssue.title}</strong>
-                  <Badge tone={getStatusTone(activeIssue.status)}>{statusLabels[activeIssue.status]}</Badge>
+                  <h3 style={{fontSize: "1.1rem", fontWeight: "600", color: "#fff"}}>{activeIssue.title}</h3>
                 </div>
-                <p>{activeIssue.mp_action}</p>
-                <p className="muted">Scheme: {activeIssue.scheme_id} | Cost: INR {activeIssue.est_cost_inr.toLocaleString()}</p>
-                <div className="signal-row">
+                <p style={{ margin: "0.5rem 0", color: "var(--ink-muted)" }}>{activeIssue.mp_action}</p>
+                <div className="tile-inline" style={{ margin: "0.75rem 0" }}>
+                  <Badge tone="slate">Scheme: {activeIssue.scheme_id.toUpperCase()}</Badge>
+                  <Badge tone="green">Cost: {formatCost(activeIssue.est_cost_inr)}</Badge>
+                </div>
+                <div className="signal-row" style={{ marginTop: "0.5rem" }}>
                   <span className="signal-pill">{activeIssue.ward_name}</span>
                   <span className="signal-pill">{activeIssue.category}</span>
-                  <span className="signal-pill">{activeIssue.n_submissions} submissions</span>
+                  <span className="signal-pill">{activeIssue.n_submissions} citizens</span>
                 </div>
               </div>
 
-              <div className="button-grid">
-                <Button variant="outline" onClick={() => transitionIssue(activeIssue, "taken_up")}>Take Up</Button>
-                <Button variant="secondary" onClick={() => transitionIssue(activeIssue, "in_progress")}>Mark In Progress</Button>
-                <Button variant="default" onClick={() => transitionIssue(activeIssue, "resolved")}>Mark Resolved</Button>
-                <Button variant="ghost" onClick={() => transitionIssue(activeIssue, "parked")}>Park</Button>
+              <div>
+                <span className="muted" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Pipeline Stage Decision</span>
+                <div className="button-grid">
+                  <Button variant="outline" onClick={() => transitionIssue(activeIssue, "taken_up")} className={activeIssue.status === "taken_up" ? "border-brand" : ""}>
+                    Take Up
+                  </Button>
+                  <Button variant="outline" onClick={() => transitionIssue(activeIssue, "in_progress")} className={activeIssue.status === "in_progress" ? "border-brand" : ""}>
+                    In Progress
+                  </Button>
+                  <Button variant="default" onClick={() => transitionIssue(activeIssue, "resolved")}>
+                    Resolve
+                  </Button>
+                  <Button variant="ghost" onClick={() => transitionIssue(activeIssue, "parked")}>
+                    Park
+                  </Button>
+                </div>
               </div>
 
-              <Field label="MP Action Notes">
+              <Field label="Administrative Actions & Notes">
                 <textarea
                   value={noteDraft}
-                  placeholder="Capture meeting decisions, officer assignment, file references"
+                  placeholder="Capture meeting minutes, department reference files, officer assignments..."
                   onChange={(event) => setNoteDraft(event.target.value)}
                 />
               </Field>
-              <Button variant="secondary" onClick={saveIssueNote}>Save Note</Button>
+              <Button variant="secondary" onClick={saveIssueNote}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Save Executive Notes
+              </Button>
 
-              <div className="timeline">
-                <div className="timeline-step">
-                  <strong>1. Intake</strong>
-                  <span className="muted">Citizen and bot signals normalized</span>
-                </div>
-                <div className="timeline-step">
-                  <strong>2. Score</strong>
-                  <span className="muted">DPS ranks urgency and reach</span>
-                </div>
-                <div className="timeline-step">
-                  <strong>3. Decide</strong>
-                  <span className="muted">MP action and notes captured</span>
-                </div>
-                <div className="timeline-step">
-                  <strong>4. Update</strong>
-                  <span className="muted">Status can flow back to citizens</span>
+              <div>
+                <span className="muted" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Constituency Stepper Status</span>
+                <div className="timeline">
+                  <div className="timeline-step" style={getTimelineStepStyle(1, activeIssue.status)}>
+                    <strong>1. Intake</strong>
+                    <span className="muted">Citizen signals validated</span>
+                  </div>
+                  <div className="timeline-step" style={getTimelineStepStyle(2, activeIssue.status)}>
+                    <strong>2. Score</strong>
+                    <span className="muted">DPS priority assigned</span>
+                  </div>
+                  <div className="timeline-step" style={getTimelineStepStyle(3, activeIssue.status)}>
+                    <strong>3. Decide</strong>
+                    <span className="muted">Taken up & notes saved</span>
+                  </div>
+                  <div className="timeline-step" style={getTimelineStepStyle(4, activeIssue.status)}>
+                    <strong>4. Update</strong>
+                    <span className="muted">Resolution published</span>
+                  </div>
                 </div>
               </div>
 
               <div className="stack compact">
-                <h3>DPS Components</h3>
+                <h3>DPS Breakdown Components</h3>
                 {Object.entries(activeIssue.components).map(([key, value]) => (
                   <div key={key} className="dps-row">
                     <span className="category">{key.replace("_", " ")}</span>
@@ -266,9 +357,14 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
               </div>
 
               <div className="stack compact">
-                <h3>Evidence Explanation</h3>
+                <h3>Evidence Clustered Explanation</h3>
                 {activeIssue.explanation.map((line) => (
-                  <p key={line} className="bullet-line">- {line}</p>
+                  <p key={line} className="bullet-line">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--brand-light)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '6px'}}>
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    {line}
+                  </p>
                 ))}
               </div>
             </div>
