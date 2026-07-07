@@ -1019,11 +1019,19 @@ textarea {
 }
 
 .status-chip span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.72rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-weight: 700;
+}
+
+.status-chip-icon {
+  flex-shrink: 0;
+  color: var(--muted);
 }
 
 .status-chip strong {
@@ -1037,16 +1045,32 @@ textarea {
   border-top-color: var(--accent);
 }
 
+.status-chip-new .status-chip-icon {
+  color: var(--accent);
+}
+
 .status-chip-taken_up {
   border-top-color: var(--violet);
+}
+
+.status-chip-taken_up .status-chip-icon {
+  color: var(--violet);
 }
 
 .status-chip-in_progress {
   border-top-color: var(--brand);
 }
 
+.status-chip-in_progress .status-chip-icon {
+  color: var(--brand);
+}
+
 .status-chip-resolved {
   border-top-color: var(--ok);
+}
+
+.status-chip-resolved .status-chip-icon {
+  color: var(--ok);
 }
 
 .status-chip-parked {

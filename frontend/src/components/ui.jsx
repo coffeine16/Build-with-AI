@@ -1,5 +1,48 @@
+import { useEffect, useRef, useState } from "react";
+
 export function cn(...tokens) {
   return tokens.filter(Boolean).join(" ");
+}
+
+/**
+ * Animates from 0 up to `value` on mount and whenever `value` changes,
+ * using an eased requestAnimationFrame loop rather than a CSS transition
+ * (CSS can't tween the text content of a number).
+ */
+export function CountUp({ value, decimals = 0, duration = 800 }) {
+  const target = Number(value) || 0;
+  const [display, setDisplay] = useState(0);
+  const previous = useRef(0);
+  const mounted = useRef(false);
+
+  useEffect(() => {
+    const from = mounted.current ? previous.current : 0;
+    mounted.current = true;
+    const delta = target - from;
+    if (delta === 0) {
+      setDisplay(target);
+      return undefined;
+    }
+
+    let raf;
+    const start = performance.now();
+
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(from + delta * eased);
+      if (progress < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        previous.current = target;
+      }
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+
+  return <>{display.toFixed(decimals)}</>;
 }
 
 export function Button({

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { categories, recommendations, statusLabels, statusOrder, wards } from "../data/recommendations";
 import { setMpIssueActions } from "../lib/storage";
-import { Badge, Button, Card, Field } from "../components/ui";
+import { Badge, Button, Card, CountUp, Field } from "../components/ui";
 
 function getDerivedStatus(issueId, issueActions) {
   return issueActions[issueId]?.status || "new";
@@ -13,6 +13,49 @@ function getStatusTone(status) {
   if (status === "taken_up") return "violet";
   if (status === "parked") return "slate";
   return "orange";
+}
+
+const STATUS_ICON_PATHS = {
+  new: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="13" />
+      <line x1="12" y1="16.5" x2="12" y2="16.51" />
+    </>
+  ),
+  taken_up: (
+    <>
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+      <line x1="4" y1="22" x2="4" y2="15" />
+    </>
+  ),
+  in_progress: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </>
+  ),
+  resolved: (
+    <>
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </>
+  ),
+  parked: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <line x1="10" y1="15" x2="10" y2="9" />
+      <line x1="14" y1="15" x2="14" y2="9" />
+    </>
+  )
+};
+
+function StatusIcon({ status }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="status-chip-icon" aria-hidden="true">
+      {STATUS_ICON_PATHS[status]}
+    </svg>
+  );
 }
 
 export default function MpDashboardPage({ session, issueActions, setIssueActions, onLogout }) {
@@ -147,15 +190,15 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
         <div className="topbar-stats">
           <div className="topbar-stat">
             <span>Priority Issues</span>
-            <strong>{dashboardSignals.highPriority}</strong>
+            <strong><CountUp value={dashboardSignals.highPriority} /></strong>
           </div>
           <div className="topbar-stat">
             <span>Total Signals</span>
-            <strong>{dashboardSignals.submissions}</strong>
+            <strong><CountUp value={dashboardSignals.submissions} /></strong>
           </div>
           <div className="topbar-stat">
             <span>Silent Needs</span>
-            <strong>{dashboardSignals.silentNeeds}</strong>
+            <strong><CountUp value={dashboardSignals.silentNeeds} /></strong>
           </div>
           <Button variant="ghost" onClick={onLogout} size="sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -169,8 +212,11 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
       <section className="status-strip">
         {statusOrder.map((statusKey) => (
           <Card key={statusKey} className={`status-chip status-chip-${statusKey}`}>
-            <span>{statusLabels[statusKey]}</span>
-            <strong>{statusCounts[statusKey]}</strong>
+            <span>
+              <StatusIcon status={statusKey} />
+              {statusLabels[statusKey]}
+            </span>
+            <strong><CountUp value={statusCounts[statusKey]} /></strong>
           </Card>
         ))}
       </section>

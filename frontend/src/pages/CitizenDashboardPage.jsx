@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { recommendations } from "../data/recommendations";
 import { setCitizenSubmissions } from "../lib/storage";
-import { Badge, Button, Card, Field } from "../components/ui";
+import { Badge, Button, Card, CountUp, Field } from "../components/ui";
 
 export default function CitizenDashboardPage({ session, submissions, setSubmissions, onLogout }) {
   const [ackText, setAckText] = useState("");
@@ -136,11 +136,11 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
         <div className="topbar-stats">
           <div className="topbar-stat">
             <span>Open Signals</span>
-            <strong>{wardRecommendations.length}</strong>
+            <strong><CountUp value={wardRecommendations.length} /></strong>
           </div>
           <div className="topbar-stat">
             <span>Avg Ward DPS</span>
-            <strong>{wardAvgDps}</strong>
+            <strong><CountUp value={wardAvgDps} decimals={1} /></strong>
           </div>
           <Button variant="ghost" onClick={onLogout} size="sm">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
