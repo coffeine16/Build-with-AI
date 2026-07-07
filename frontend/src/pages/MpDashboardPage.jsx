@@ -325,19 +325,19 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
                 <span className="muted" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Constituency Stepper Status</span>
                 <div className="timeline">
                   <div className="timeline-step" style={getTimelineStepStyle(1, activeIssue.status)}>
-                    <strong>1. Intake</strong>
+                    <strong>Intake</strong>
                     <span className="muted">Citizen signals validated</span>
                   </div>
                   <div className="timeline-step" style={getTimelineStepStyle(2, activeIssue.status)}>
-                    <strong>2. Score</strong>
+                    <strong>Score</strong>
                     <span className="muted">DPS priority assigned</span>
                   </div>
                   <div className="timeline-step" style={getTimelineStepStyle(3, activeIssue.status)}>
-                    <strong>3. Decide</strong>
+                    <strong>Decide</strong>
                     <span className="muted">Taken up & notes saved</span>
                   </div>
                   <div className="timeline-step" style={getTimelineStepStyle(4, activeIssue.status)}>
-                    <strong>4. Update</strong>
+                    <strong>Update</strong>
                     <span className="muted">Resolution published</span>
                   </div>
                 </div>

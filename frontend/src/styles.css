@@ -381,6 +381,10 @@ textarea:focus-visible,
   border-top: 4px solid var(--sidebar-bg);
 }
 
+.citizen-auth-card {
+  border-top: 4px solid var(--brand);
+}
+
 /* Role Grid */
 .role-grid {
   align-items: stretch;
@@ -413,6 +417,12 @@ textarea:focus-visible,
   margin-bottom: 1rem;
 }
 
+.role-card-top > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
 .role-card h2 {
   font-size: 1.35rem;
   font-weight: 700;
@@ -427,22 +437,37 @@ textarea:focus-visible,
   line-height: 1.5;
 }
 
+.role-card-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.role-index {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
 .role-icon {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius);
-  background: rgba(15, 107, 63, 0.08);
+  background: var(--surface);
   color: var(--brand-dark);
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--brand-dark);
   transition: background 0.2s, transform 0.2s;
 }
 
 .mp-glow .role-icon {
-  background: rgba(11, 61, 42, 0.08);
   color: var(--sidebar-bg);
-  border-color: rgba(11, 61, 42, 0.15);
+  border-color: var(--sidebar-bg);
 }
 
 .role-card:hover .role-icon {
@@ -1112,32 +1137,65 @@ textarea {
   line-height: 1.45;
 }
 
-/* Timeline */
+/* Numbered process strip */
 .timeline {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 2rem;
+  counter-reset: process-step;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 15px;
+  left: 12.5%;
+  right: 12.5%;
+  height: 1px;
+  background: var(--line-strong);
+  z-index: 0;
 }
 
 .timeline-step {
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0.6rem 0.75rem;
-  background: rgba(15, 107, 63, 0.01);
+  position: relative;
+  z-index: 1;
+  padding: 2.5rem 0.75rem 0;
+  text-align: center;
+}
+
+.timeline-step::before {
+  counter-increment: process-step;
+  content: counter(process-step);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--brand-dark);
+  background: var(--surface);
+  font-family: "Source Serif 4", Georgia, serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--brand-dark);
 }
 
 .timeline-step strong {
   display: block;
-  margin-bottom: 0.15rem;
-  font-size: 0.78rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
   color: var(--ink);
   font-weight: 600;
 }
 
 .timeline-step .muted {
-  font-size: 0.7rem;
-  line-height: 1.3;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .empty-state {
@@ -1223,6 +1281,14 @@ textarea {
   .button-grid,
   .timeline {
     grid-template-columns: 1fr;
+  }
+
+  .timeline {
+    gap: 1.5rem;
+  }
+
+  .timeline::before {
+    display: none;
   }
 
   .dps-row,

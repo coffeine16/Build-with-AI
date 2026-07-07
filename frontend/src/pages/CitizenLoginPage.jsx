@@ -24,7 +24,7 @@ export default function CitizenLoginPage({ onLogin }) {
 
   return (
     <main className="screen screen-login">
-      <Card className="auth-card">
+      <Card className="auth-card citizen-auth-card">
         <p className="kicker">Client Access</p>
         <h1>Raise local issues with context</h1>
         <p className="subtitle">
