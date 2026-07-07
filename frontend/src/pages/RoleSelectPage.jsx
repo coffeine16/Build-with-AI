@@ -47,11 +47,46 @@ export default function RoleSelectPage() {
             <span>Live System Flow</span>
             <Badge tone="green">Prototype Ready</Badge>
           </div>
-          <div className="system-flow">
-            <span>Citizen reports intake</span>
-            <span>Clustering webhook</span>
-            <span>DPS priority scoring</span>
-            <span>MP action workspace</span>
+          <div className="flow-diagram">
+            <span className="flow-pulse" aria-hidden="true" />
+            <div className="flow-node">
+              <span className="flow-node-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+                  <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" />
+                </svg>
+              </span>
+              <span className="flow-node-label">Citizen reports intake</span>
+            </div>
+            <div className="flow-node">
+              <span className="flow-node-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                  <polyline points="2 17 12 22 22 17" />
+                  <polyline points="2 12 12 17 22 12" />
+                </svg>
+              </span>
+              <span className="flow-node-label">Clustering webhook</span>
+            </div>
+            <div className="flow-node">
+              <span className="flow-node-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <circle cx="12" cy="12" r="6" />
+                  <circle cx="12" cy="12" r="2" />
+                </svg>
+              </span>
+              <span className="flow-node-label">DPS priority scoring</span>
+            </div>
+            <div className="flow-node">
+              <span className="flow-node-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg>
+              </span>
+              <span className="flow-node-label">MP action workspace</span>
+            </div>
           </div>
         </div>
 
