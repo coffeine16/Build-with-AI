@@ -1,0 +1,171 @@
+{
+  "name": "01b - WhatsApp Inbound",
+  "nodes": [
+    {
+      "parameters": { "updates": ["messages"], "options": {} },
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [-1760, 400],
+      "webhookId": "awaaz-whatsapp-inbound",
+      "id": "w1b-n1-trigger",
+      "credentials": { "whatsAppTriggerApi": { "id": "REPLACE_WHATSAPP_TRIGGER_CRED", "name": "WhatsApp Trigger account" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cloud API sends both messages and status receipts — keep only real messages.\nconst root = $json;\nconst value = root.value || root;\nconst msg = (value.messages && value.messages[0]) || (root.messages && root.messages[0]);\nif (!msg) { return []; } // delivery/read receipts etc. — ignore silently\nconst contacts = value.contacts || root.contacts || [];\nconst name = contacts[0]?.profile?.name || '';\n\nlet media_kind = null, media_id = null, mime_type = null;\nlet text = '';\nlet lat = null, lng = null;\n\nif (msg.type === 'text') { text = msg.text?.body || ''; }\nif (msg.type === 'audio' || msg.type === 'voice') {\n  media_kind = 'voice';\n  media_id = msg.audio?.id || msg.voice?.id || null;\n  mime_type = msg.audio?.mime_type || 'audio/ogg';\n}\nif (msg.type === 'image') {\n  media_kind = 'photo';\n  media_id = msg.image?.id || null;\n  mime_type = msg.image?.mime_type || 'image/jpeg';\n  text = msg.image?.caption || '';\n}\nif (msg.type === 'location') {\n  lat = msg.location?.latitude ?? null;\n  lng = msg.location?.longitude ?? null;\n  text = msg.location?.name || msg.location?.address || '';\n}\n\nreturn [{ json: {\n  channel: 'whatsapp',\n  citizen_key: String(msg.from),\n  wa_to: String(msg.from),\n  media_kind, media_id, mime_type,\n  text, lat, lng,\n  location_text: null,\n  language_hint: null,\n  contact_name: name,\n} }];"
+      },
+      "name": "Normalize & Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1536, 400],
+      "id": "w1b-n2-normalize"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "combinator": "and",
+          "conditions": [ { "leftValue": "={{ !!$json.media_id }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ]
+        },
+        "options": {}
+      },
+      "name": "Has Media?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-1312, 400],
+      "id": "w1b-n3-hasmedia"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://graph.facebook.com/v20.0/{{ $json.media_id }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer WHATSAPP_TOKEN" } ] },
+        "options": { "timeout": 30000 }
+      },
+      "name": "Get Media URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-1088, 240],
+      "id": "w1b-n4-getmediaurl"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url }}",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "Bearer WHATSAPP_TOKEN" } ] },
+        "options": { "timeout": 60000, "response": { "response": { "responseFormat": "file" } } }
+      },
+      "name": "Download Media",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-864, 240],
+      "id": "w1b-n5-downloadmedia"
+    },
+    {
+      "parameters": {
+        "jsCode": "const norm = $('Normalize & Filter').first().json;\nconst buffer = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst b64 = buffer.toString('base64');\nreturn [{ json: {\n  ...norm,\n  media_type: norm.media_kind,\n  audio_base64: norm.media_kind === 'voice' ? b64 : null,\n  photo_base64: norm.media_kind === 'photo' ? b64 : null,\n} }];"
+      },
+      "name": "Media to Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-640, 240],
+      "id": "w1b-n6-mediab64"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { ...$json, media_type: 'text', audio_base64: null, photo_base64: null } }];"
+      },
+      "name": "Text Passthrough",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-864, 560],
+      "id": "w1b-n7-textpass"
+    },
+    {
+      "parameters": {
+        "workflowId": { "__rl": true, "value": "REPLACE_WITH_W3_WORKFLOW_ID", "mode": "list", "cachedResultName": "03 - Process Submission" },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "channel": "={{ $json.channel }}",
+            "citizen_key": "={{ $json.citizen_key }}",
+            "media_type": "={{ $json.media_type }}",
+            "text": "={{ $json.text }}",
+            "audio_base64": "={{ $json.audio_base64 }}",
+            "photo_base64": "={{ $json.photo_base64 }}",
+            "mime_type": "={{ $json.mime_type }}",
+            "lat": "={{ $json.lat }}",
+            "lng": "={{ $json.lng }}",
+            "location_text": "={{ $json.location_text }}",
+            "language_hint": "={{ $json.language_hint }}"
+          },
+          "attemptToConvertTypes": true,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "name": "Run W3",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [-416, 400],
+      "id": "w1b-n8-runw3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const r = $json;\nconst reply = [r.ack_text, r.followup_text].filter(Boolean).join(' ');\nreturn [{ json: {\n  reply_text: reply || 'Dhanyavaad!',\n  wa_to: $('Normalize & Filter').first().json.wa_to,\n} }];"
+      },
+      "name": "Build Reply",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-192, 400],
+      "id": "w1b-n9-buildreply"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/WHATSAPP_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer WHATSAPP_TOKEN" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $json.wa_to, type: 'text', text: { body: $json.reply_text } }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "name": "Send WhatsApp Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [32, 400],
+      "id": "w1b-n10-sendreply"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": { "main": [[ { "node": "Normalize & Filter", "type": "main", "index": 0 } ]] },
+    "Normalize & Filter": { "main": [[ { "node": "Has Media?", "type": "main", "index": 0 } ]] },
+    "Has Media?": {
+      "main": [
+        [ { "node": "Get Media URL", "type": "main", "index": 0 } ],
+        [ { "node": "Text Passthrough", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Get Media URL": { "main": [[ { "node": "Download Media", "type": "main", "index": 0 } ]] },
+    "Download Media": { "main": [[ { "node": "Media to Base64", "type": "main", "index": 0 } ]] },
+    "Media to Base64": { "main": [[ { "node": "Run W3", "type": "main", "index": 0 } ]] },
+    "Text Passthrough": { "main": [[ { "node": "Run W3", "type": "main", "index": 0 } ]] },
+    "Run W3": { "main": [[ { "node": "Build Reply", "type": "main", "index": 0 } ]] },
+    "Build Reply": { "main": [[ { "node": "Send WhatsApp Reply", "type": "main", "index": 0 } ]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "id": "REPLACE_AFTER_IMPORT",
+  "tags": []
+}

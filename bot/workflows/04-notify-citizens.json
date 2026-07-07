@@ -1,0 +1,151 @@
+{
+  "name": "04 - Notify Citizens",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "notify",
+        "responseMode": "onReceived",
+        "options": { "allowedOrigins": "*" }
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1540, 400],
+      "webhookId": "awaaz-notify",
+      "id": "w4-n1-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Accepts either a direct call from the frontend: { recommendation_id: 42 }\n// or a Supabase Database Webhook on the events table (INSERT payload).\nconst b = $json.body || $json;\nlet rid = b.recommendation_id ?? null;\nif (!rid && b.record) {\n  const rec = b.record;\n  const to = rec.payload?.to;\n  if (rec.ref_type === 'recommendation' && rec.kind === 'status_change' && to === 'taken_up') {\n    rid = rec.ref_id;\n  }\n}\nif (!rid) { return []; } // not a taken_up transition — ignore silently\nreturn [{ json: { recommendation_id: rid } }];"
+      },
+      "name": "Guard & Extract ID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1316, 400],
+      "id": "w4-n2-guard"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT DISTINCT c.channel, c.channel_user_id, COALESCE(c.language,'hi') AS language,\n       r.id AS recommendation_id, r.title, COALESCE(w.name,'') AS ward_name\nFROM recommendations r\nJOIN themes t ON t.id = r.theme_id\nLEFT JOIN wards w ON w.id = t.ward_id\nJOIN theme_submissions ts ON ts.theme_id = t.id\nJOIN submissions s ON s.id = ts.submission_id\nJOIN citizens c ON c.id = s.citizen_id\nWHERE r.id = $1;",
+        "options": { "queryReplacement": "={{ $json.recommendation_id }}" }
+      },
+      "name": "Fetch Recipients",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [-1092, 400],
+      "id": "w4-n3-fetchrecipients",
+      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+    },
+    {
+      "parameters": {
+        "jsCode": "const j = $json;\nconst hi = String(j.language || 'hi').startsWith('hi');\nconst where = j.ward_name ? ` (${j.ward_name})` : '';\nconst t = hi\n  ? `Achhi khabar! Aapne jo samasya batayi thi — \"${j.title}\"${where} — MP ne is kaam ko aage badhaya hai ✅ Aage ki jaankari aapko milti rahegi.`\n  : `Good news! The issue you raised — \"${j.title}\"${where} — has been taken up by your MP ✅ We will keep you updated on progress.`;\nreturn [{ json: { ...j, notify_text: t } }];"
+      },
+      "name": "Build Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-868, 400],
+      "id": "w4-n4-buildmessages"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+                "combinator": "and",
+                "conditions": [ { "leftValue": "={{ $json.channel }}", "rightValue": "telegram", "operator": { "type": "string", "operation": "equals" } } ]
+              },
+              "renameOutput": true, "outputKey": "telegram"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+                "combinator": "and",
+                "conditions": [ { "leftValue": "={{ $json.channel }}", "rightValue": "whatsapp", "operator": { "type": "string", "operation": "equals" } } ]
+              },
+              "renameOutput": true, "outputKey": "whatsapp"
+            }
+          ]
+        },
+        "options": { "fallbackOutput": "none" }
+      },
+      "name": "By Channel",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [-644, 400],
+      "id": "w4-n5-bychannel"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.channel_user_id }}",
+        "text": "={{ $json.notify_text }}",
+        "additionalFields": {}
+      },
+      "name": "Send Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [-420, 280],
+      "id": "w4-n6-sendtelegram",
+      "credentials": { "telegramApi": { "id": "REPLACE_TELEGRAM_CRED", "name": "Telegram account" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v20.0/WHATSAPP_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer WHATSAPP_TOKEN" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', to: $json.channel_user_id, type: 'text', text: { body: $json.notify_text } }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "name": "Send WhatsApp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-420, 520],
+      "id": "w4-n7-sendwhatsapp"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO events (ref_type, ref_id, kind, payload) VALUES ('recommendation', $1, 'notified', jsonb_build_object('channel', $2, 'user', $3));",
+        "options": { "queryReplacement": "={{ $('Build Messages').item.json.recommendation_id }},{{ $('Build Messages').item.json.channel }},{{ $('Build Messages').item.json.channel_user_id }}" }
+      },
+      "name": "Log Notified",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [-196, 400],
+      "id": "w4-n8-lognotified",
+      "alwaysOutputData": true,
+      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": { "main": [[ { "node": "Guard & Extract ID", "type": "main", "index": 0 } ]] },
+    "Guard & Extract ID": { "main": [[ { "node": "Fetch Recipients", "type": "main", "index": 0 } ]] },
+    "Fetch Recipients": { "main": [[ { "node": "Build Messages", "type": "main", "index": 0 } ]] },
+    "Build Messages": { "main": [[ { "node": "By Channel", "type": "main", "index": 0 } ]] },
+    "By Channel": {
+      "main": [
+        [ { "node": "Send Telegram", "type": "main", "index": 0 } ],
+        [ { "node": "Send WhatsApp", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Send Telegram": { "main": [[ { "node": "Log Notified", "type": "main", "index": 0 } ]] },
+    "Send WhatsApp": { "main": [[ { "node": "Log Notified", "type": "main", "index": 0 } ]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": false },
+  "id": "REPLACE_AFTER_IMPORT",
+  "tags": []
+}

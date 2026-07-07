@@ -1,38 +1,20 @@
-# Intake track (n8n on EC2)
+# Intake track (n8n Cloud)
 
-Every channel (Telegram, WhatsApp, the web /citizen page) posts into one
-shared processing workflow. Channels are thin adapters; the brain is W3.
-
-## Workflows
+Every channel is a THIN adapter; all logic lives in one shared brain (03).
+Import order + full wiring guide: `workflows/IMPORT.md`.
 
 | WF | Trigger | Job |
 |---|---|---|
-| W3 Process Submission | Execute-Workflow | THE BRAIN: one multimodal Gemini call (transcribe + describe + extract + ack text), ward resolution (PostGIS point-in-polygon → validated alias match → 'pending'), media upload to Supabase Storage, insert into submissions. Returns {ack_text, submission_id}. |
-| W2 Web Submit | Webhook | Receives {media_type, text?, audio_base64?, photo_base64?, lat?, lng?} from the /citizen page → calls W3 → returns ack JSON. |
-| W1 Telegram | Telegram trigger | Normalize (text/voice/photo/location) → pending-ward check → calls W3 → sends ack reply. |
-| W1b WhatsApp | WhatsApp Cloud API trigger | Same as W1 for the Meta test number (5 whitelisted numbers). |
-| W4 Notify | Webhook | Called on MP "take up": joins theme_submissions → distinct citizens → sends Telegram/WhatsApp notifications. |
+| 03 Process Submission | Execute-Workflow | THE BRAIN. Checks for a pending-location follow-up first (works for every channel). Otherwise: one multimodal Gemini call (transcribe + describe + extract + ack + localized follow-up question), ward resolution (GPS point-in-polygon -> validated alias match -> pending), media upload to Supabase Storage, insert submission, log event. Returns {submission_id, ack_text, followup_text, ward_resolution, category, ask, mode}. Gemini call auto-retries once; hardened JSON fallback ensures no citizen message is ever dropped. |
+| 02 Web Submit | Webhook (CORS on) | /citizen page posts here -> calls 03 -> returns the full response JSON for the confirmation card. |
+| 01 Telegram | Telegram trigger | Normalize text/voice/photo/location -> 03 -> reply (ack + follow-up if location pending). |
+| 01b WhatsApp | WhatsApp Cloud API trigger | Same as 01; filters out delivery/read receipts; two-step Graph media download; replies via Graph API. Test number = 5 whitelisted recipients. |
+| 04 Notify | Webhook | The closed loop: MP takes up a work -> joins theme_submissions -> every contributing citizen gets a message in their language on their channel. Called by the dashboard after the take-up RPC (also accepts Supabase DB-webhook payloads). |
 
-## Build order
-1. W3 + W2, text-only. Milestone: curl a JSON body → row in `submissions`
-   with extracted fields → response contains ack_text. This unblocks the
-   pipeline track with REAL rows.
-2. W1 Telegram text path.
-3. Voice path (Telegram getFile → base64 → same Gemini call, audio part
-   inline — NO separate ASR service). Then photo path.
-4. Pending-ward follow-up loop (one question max; check for a 'pending'
-   submission from this citizen in the last 30 min before treating a
-   message as new).
-5. WhatsApp adapter (start the Meta developer app + test number setup on
-   DAY ONE — it's the only step with external uncertainty).
-6. W4 Notify.
-
-## Haq scars to pre-empt
-- Wrap every Gemini JSON parse in try/catch with one "output valid JSON
-  only" retry.
-- "Attempt to Convert Types" ON for every Execute-Workflow node.
-- Set WEBHOOK_URL correctly in compose BEFORE registering any webhook.
-
-## Depends on
-`wards` table loaded (scripts/load_wards.py) + PostGIS extension enabled
-in Supabase (Dashboard → Database → Extensions → postgis).
+Design rules that must survive any edits:
+- The LLM extracts and phrases; deterministic code resolves wards, decides,
+  and writes. Gemini's ward_guess is VALIDATED against the wards table.
+- One follow-up question maximum, generated in the citizen's language.
+- Every ack echoes back what was understood (trust + free error correction).
+- All channels write identical rows — nothing downstream knows the channel
+  except as a display badge.
