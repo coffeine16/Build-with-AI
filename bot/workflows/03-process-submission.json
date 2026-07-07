@@ -5,25 +5,221 @@
       "parameters": {
         "workflowInputs": {
           "values": [
-            { "name": "channel" },
-            { "name": "citizen_key" },
-            { "name": "media_type" },
-            { "name": "text" },
-            { "name": "audio_base64" },
-            { "name": "photo_base64" },
-            { "name": "mime_type" },
-            { "name": "lat" },
-            { "name": "lng" },
-            { "name": "location_text" },
-            { "name": "language_hint" }
+            {
+              "name": "channel"
+            },
+            {
+              "name": "citizen_key"
+            },
+            {
+              "name": "media_type"
+            },
+            {
+              "name": "text"
+            },
+            {
+              "name": "audio_base64"
+            },
+            {
+              "name": "photo_base64"
+            },
+            {
+              "name": "mime_type"
+            },
+            {
+              "name": "lat"
+            },
+            {
+              "name": "lng"
+            },
+            {
+              "name": "location_text"
+            },
+            {
+              "name": "language_hint"
+            },
+            {
+              "name": "channel_message_id"
+            }
           ]
         }
       },
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
-      "position": [-2100, 400],
-      "id": "w3-n1-trigger"
+      "position": [
+        -3000,
+        500
+      ],
+      "id": "v3-n01"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id FROM submissions WHERE channel_message_id = $1 AND $1 IS NOT NULL AND $1 <> '' LIMIT 1;",
+        "options": {
+          "queryReplacement": "={{ $json.channel_message_id }}"
+        }
+      },
+      "name": "Dedupe Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -2780,
+        500
+      ],
+      "id": "v3-n02",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().filter(i => i.json && i.json.id !== undefined && i.json.id !== null);\nreturn [{ json: { is_duplicate: rows.length > 0 } }];"
+      },
+      "name": "Dedupe Flag",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2560,
+        500
+      ],
+      "id": "v3-n03"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.is_duplicate }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Is Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -2340,
+        500
+      ],
+      "id": "v3-n04"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { mode: 'duplicate', ack_text: '', followup_text: '', voice_url: null, submission_ids: [], public_ids: [] } }];"
+      },
+      "name": "Duplicate Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2120,
+        340
+      ],
+      "id": "v3-n05"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*)::int AS recent FROM submissions s JOIN citizens c ON c.id = s.citizen_id WHERE c.channel = $1 AND c.channel_user_id = $2 AND s.created_at > now() - interval '1 hour';",
+        "options": {
+          "queryReplacement": "={{ $('Execute Workflow Trigger').first().json.channel }},{{ $('Execute Workflow Trigger').first().json.citizen_key }}"
+        }
+      },
+      "name": "Rate Check",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        -2120,
+        560
+      ],
+      "id": "v3-n06",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all();\nconst recent = rows.length && rows[0].json.recent !== undefined ? rows[0].json.recent : 0;\nreturn [{ json: { throttled: recent >= 8 } }];"
+      },
+      "name": "Rate Flag",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1900,
+        560
+      ],
+      "id": "v3-n07"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.throttled }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Throttled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1680,
+        560
+      ],
+      "id": "v3-n08"
+    },
+    {
+      "parameters": {
+        "jsCode": "const hint = $('Execute Workflow Trigger').first().json.language_hint || 'hi';\nconst hi = String(hint).startsWith('hi') || hint === null;\nconst ack = hi\n  ? 'Aapne pichhle ghante mein kaafi sandesh bheje hain \ud83d\ude4f Kripya thodi der baad koshish karein \u2014 aapki pichhli shikayatein surakshit hain.'\n  : 'You have sent quite a few messages in the last hour \ud83d\ude4f Please try again a little later \u2014 your earlier submissions are safe.';\nreturn [{ json: { mode: 'throttled', ack_text: ack, followup_text: '', voice_url: null, submission_ids: [], public_ids: [] } }];"
+      },
+      "name": "Throttle Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1460,
+        400
+      ],
+      "id": "v3-n09"
     },
     {
       "parameters": {
@@ -34,158 +230,457 @@
       "name": "Fetch Wards",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [-1880, 400],
-      "id": "w3-n2-fetchwards",
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+      "position": [
+        -1460,
+        640
+      ],
+      "id": "v3-n10",
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT s.id, COALESCE(s.language,'hi') AS language\nFROM submissions s\nJOIN citizens c ON c.id = s.citizen_id\nWHERE c.channel = $1 AND c.channel_user_id = $2\n  AND s.ward_resolution = 'pending'\n  AND s.created_at > now() - interval '30 minutes'\nORDER BY s.created_at DESC\nLIMIT 1;",
-        "options": { "queryReplacement": "={{ $('Execute Workflow Trigger').first().json.channel }},{{ $('Execute Workflow Trigger').first().json.citizen_key }}" }
+        "query": "SELECT s.id, COALESCE(s.language,'hi') AS language FROM submissions s JOIN citizens c ON c.id = s.citizen_id WHERE c.channel = $1 AND c.channel_user_id = $2 AND s.ward_resolution = 'pending' AND s.created_at > now() - interval '30 minutes' ORDER BY s.created_at DESC LIMIT 1;",
+        "options": {
+          "queryReplacement": "={{ $('Execute Workflow Trigger').first().json.channel }},{{ $('Execute Workflow Trigger').first().json.citizen_key }}"
+        }
       },
       "name": "Check Pending",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [-1660, 400],
-      "id": "w3-n3-checkpending",
+      "position": [
+        -1240,
+        640
+      ],
+      "id": "v3-n11",
       "alwaysOutputData": true,
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const rows = $input.all().filter(i => i.json && i.json.id !== undefined && i.json.id !== null);\nreturn [{ json: {\n  pending: rows.length > 0,\n  pending_id: rows.length ? rows[0].json.id : null,\n  pending_language: rows.length ? rows[0].json.language : 'hi',\n} }];"
+        "jsCode": "const rows = $input.all().filter(i => i.json && i.json.id !== undefined && i.json.id !== null);\nreturn [{ json: { pending: rows.length > 0, pending_id: rows.length ? rows[0].json.id : null, pending_language: rows.length ? rows[0].json.language : 'hi' } }];"
       },
       "name": "Pending Flag",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1440, 400],
-      "id": "w3-n4-pendingflag"
+      "position": [
+        -1020,
+        640
+      ],
+      "id": "v3-n12"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "combinator": "and",
-          "conditions": [ { "leftValue": "={{ $json.pending }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ]
+          "conditions": [
+            {
+              "leftValue": "={{ $json.pending }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
         },
         "options": {}
       },
       "name": "Pending Exists?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [-1220, 400],
-      "id": "w3-n5-pendingexists"
+      "position": [
+        -800,
+        640
+      ],
+      "id": "v3-n13"
     },
     {
       "parameters": {
-        "jsCode": "// ---- PENDING BRANCH: this message is treated as the location answer ----\nconst trig = $('Execute Workflow Trigger').first().json;\nconst wards = $('Fetch Wards').all().map(i => i.json);\nconst flag = $('Pending Flag').first().json;\n\nfunction pointInRing(pt, ring) {\n  let inside = false;\n  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {\n    const xi = ring[i][0], yi = ring[i][1];\n    const xj = ring[j][0], yj = ring[j][1];\n    const intersect = ((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi);\n    if (intersect) inside = !inside;\n  }\n  return inside;\n}\nfunction pointInGeom(pt, geom) {\n  if (!geom) return false;\n  try {\n    if (geom.type === 'Polygon') return pointInRing(pt, geom.coordinates[0]);\n    if (geom.type === 'MultiPolygon') return geom.coordinates.some(poly => pointInRing(pt, poly[0]));\n  } catch (e) { return false; }\n  return false;\n}\n\nlet ward_id = null, ward_resolution = 'manual_review';\nconst lat = parseFloat(trig.lat), lng = parseFloat(trig.lng);\nif (!isNaN(lat) && !isNaN(lng)) {\n  const m = wards.find(w => pointInGeom([lng, lat], w.geom));\n  if (m) { ward_id = m.id; ward_resolution = 'gps'; }\n}\nif (!ward_id && trig.text) {\n  const guess = String(trig.text).toLowerCase().trim();\n  const m = wards.find(w =>\n    w.name.toLowerCase() === guess ||\n    guess.includes(w.name.toLowerCase()) ||\n    (w.aliases || []).some(a => guess.includes(a.toLowerCase()) || a.toLowerCase().includes(guess))\n  );\n  if (m) { ward_id = m.id; ward_resolution = 'alias_match'; }\n}\n\nreturn [{ json: {\n  submission_id: flag.pending_id,\n  ward_id, ward_resolution,\n  location_text: trig.text || trig.location_text || null,\n  language: flag.pending_language || 'hi',\n} }];"
+        "jsCode": "const trig = $('Execute Workflow Trigger').first().json;\nconst wards = $('Fetch Wards').all().map(i => i.json);\nconst flag = $('Pending Flag').first().json;\nfunction pointInRing(pt, ring) { let inside = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const xi = ring[i][0], yi = ring[i][1]; const xj = ring[j][0], yj = ring[j][1]; const intersect = ((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi); if (intersect) inside = !inside; } return inside; }\nfunction pointInGeom(pt, geom) { if (!geom) return false; try { if (geom.type === 'Polygon') return pointInRing(pt, geom.coordinates[0]); if (geom.type === 'MultiPolygon') return geom.coordinates.some(p => pointInRing(pt, p[0])); } catch (e) { return false; } return false; }\nlet ward_id = null, ward_resolution = 'manual_review';\nconst lat = parseFloat(trig.lat), lng = parseFloat(trig.lng);\nif (!isNaN(lat) && !isNaN(lng)) { const m = wards.find(w => pointInGeom([lng, lat], w.geom)); if (m) { ward_id = m.id; ward_resolution = 'gps'; } }\nif (!ward_id && trig.text) { const guess = String(trig.text).toLowerCase().trim(); const m = wards.find(w => w.name.toLowerCase() === guess || guess.includes(w.name.toLowerCase()) || (w.aliases || []).some(a => guess.includes(a.toLowerCase()) || a.toLowerCase().includes(guess))); if (m) { ward_id = m.id; ward_resolution = 'alias_match'; } }\nreturn [{ json: { submission_id: flag.pending_id, ward_id, ward_resolution, location_text: trig.text || trig.location_text || null, language: flag.pending_language || 'hi' } }];"
       },
       "name": "Resolve Ward From Reply",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1000, 240],
-      "id": "w3-n6-resolvereply"
+      "position": [
+        -580,
+        480
+      ],
+      "id": "v3-n14"
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "UPDATE submissions SET ward_id = $1, ward_resolution = $2, location_text = COALESCE($3, location_text) WHERE id = $4 RETURNING id;",
-        "options": { "queryReplacement": "={{ $json.ward_id }},{{ $json.ward_resolution }},{{ $json.location_text }},{{ $json.submission_id }}" }
+        "options": {
+          "queryReplacement": "={{ $json.ward_id }},{{ $json.ward_resolution }},{{ $json.location_text }},{{ $json.submission_id }}"
+        }
       },
       "name": "Update Pending Submission",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [-780, 240],
-      "id": "w3-n7-updatepending",
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+      "position": [
+        -360,
+        480
+      ],
+      "id": "v3-n15",
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
     },
     {
       "parameters": {
         "operation": "executeQuery",
         "query": "INSERT INTO events (ref_type, ref_id, kind, payload) VALUES ('submission', $1, 'ward_update', jsonb_build_object('resolution', $2));",
-        "options": { "queryReplacement": "={{ $('Resolve Ward From Reply').first().json.submission_id }},{{ $('Resolve Ward From Reply').first().json.ward_resolution }}" }
+        "options": {
+          "queryReplacement": "={{ $('Resolve Ward From Reply').first().json.submission_id }},{{ $('Resolve Ward From Reply').first().json.ward_resolution }}"
+        }
       },
       "name": "Log Ward Event",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [-560, 240],
-      "id": "w3-n8-logwardevent",
+      "position": [
+        -140,
+        480
+      ],
+      "id": "v3-n16",
       "alwaysOutputData": true,
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const r = $('Resolve Ward From Reply').first().json;\nconst hi = (r.language || 'hi').startsWith('hi');\nconst ok = r.ward_resolution !== 'manual_review';\nconst ack = ok\n  ? (hi ? 'Dhanyavaad! Aapki jagah darj ho gayi ✅ Jab is par kaam hoga, aapko update milega.' : 'Thank you! Your location has been recorded ✅ You will get an update when there is progress.')\n  : (hi ? 'Dhanyavaad! Humne aapka jawab note kar liya hai — hamari team jagah confirm karegi.' : 'Thank you! We have noted your reply — our team will confirm the exact area.');\nreturn [{ json: {\n  submission_id: r.submission_id,\n  ack_text: ack,\n  followup_text: '',\n  ward_resolution: r.ward_resolution,\n  category: null,\n  ask: null,\n  mode: 'ward_update',\n} }];"
+        "jsCode": "const r = $('Resolve Ward From Reply').first().json;\nconst hi = (r.language || 'hi').startsWith('hi');\nconst ok = r.ward_resolution !== 'manual_review';\nconst ack = ok ? (hi ? 'Dhanyavaad! Aapki jagah darj ho gayi \u2705 Jab is par kaam hoga, aapko update milega.' : 'Thank you! Your location has been recorded \u2705 You will get an update when there is progress.') : (hi ? 'Dhanyavaad! Humne aapka jawab note kar liya hai \u2014 hamari team jagah confirm karegi.' : 'Thank you! We noted your reply \u2014 our team will confirm the exact area.');\nreturn [{ json: { mode: 'ward_update', ack_text: ack, followup_text: '', voice_url: null, submission_ids: [r.submission_id], public_ids: ['AWZ-' + r.submission_id] } }];"
       },
-      "name": "Build Ward Ack",
+      "name": "Ward Ack Response",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-340, 240],
-      "id": "w3-n9-buildwardack"
+      "position": [
+        80,
+        480
+      ],
+      "id": "v3-n17"
     },
     {
       "parameters": {
-        "jsCode": "// ---- NEW SUBMISSION BRANCH ----\nconst trig = $('Execute Workflow Trigger').first().json;\nconst wards = $('Fetch Wards').all().map(i => i.json);\nconst wardList = wards.map(w => `${w.name}${(w.aliases && w.aliases.length) ? ' (aka: ' + w.aliases.join(', ') + ')' : ''}`).join('; ');\nconst hasGps = trig.lat !== null && trig.lat !== undefined && trig.lat !== '' && !isNaN(parseFloat(trig.lat));\n\nconst parts = [];\nif (trig.media_type === 'voice' && trig.audio_base64) {\n  parts.push({ inline_data: { mime_type: trig.mime_type || 'audio/ogg', data: trig.audio_base64 } });\n} else if (trig.media_type === 'photo' && trig.photo_base64) {\n  parts.push({ inline_data: { mime_type: trig.mime_type || 'image/jpeg', data: trig.photo_base64 } });\n}\n\nconst promptText = `You process a citizen's message about a local development need in an Indian constituency (categories: education, water, roads, health, electricity, sanitation, other). The input may include audio, an image, and/or the text below.\n\nCitizen text (may be empty if audio/image only): ${trig.text || '(none — see attached media)'}\nCitizen-shared location text (may be empty): ${trig.location_text || '(none)'}\nGPS coordinates provided: ${hasGps ? 'yes' : 'no'}\n\nOutput ONLY strict JSON, no markdown, matching exactly this shape:\n{\n  \"transcript\": string or null,\n  \"media_description\": string or null,\n  \"ask\": string,\n  \"category\": \"education|water|roads|health|electricity|sanitation|other\",\n  \"sub_type\": string,\n  \"urgency_signals\": [string],\n  \"language\": string,\n  \"ward_guess\": string or null,\n  \"ack_text\": string,\n  \"location_followup\": string\n}\n\nField rules:\n- transcript: verbatim transcription if audio was given, else null.\n- media_description: factual description if an image was given, else null.\n- ask: one-line summary in English of what the citizen needs.\n- sub_type: short snake_case tag, e.g. infrastructure_repair, tap_connection, road_repair.\n- urgency_signals: ONLY signals explicitly present, e.g. [\"monsoon\",\"children_affected\"]. [] if none.\n- language: ISO code of the language the citizen used, e.g. \"hi\", \"en\".\n- ward_guess: EXACT copy of one name from the ward list below, or null if unsure. NEVER invent a name.\n- ack_text: 1-2 warm sentences IN THE CITIZEN'S LANGUAGE confirming what was understood and that they'll get an update. NEVER promise the work will be done.\n- location_followup: one short question IN THE CITIZEN'S LANGUAGE asking which ward/area/mohalla they live in (always generate this; it is only sent if we cannot locate them).\n\nWard list (pick ward_guess ONLY from these names, exactly as written): ${wardList}\n\nRules: use null for anything absent or uncertain. Never guess urgency, category, or ward if not clearly indicated by the citizen.`;\n\nparts.push({ text: promptText });\n\nreturn [{ json: {\n  gemini_body: {\n    contents: [{ parts }],\n    generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 2000 }\n  }\n} }];"
+        "jsCode": "const trig = $('Execute Workflow Trigger').first().json;\nconst wards = $('Fetch Wards').all().map(i => i.json);\nconst wardList = wards.map(w => `${w.name}${(w.aliases && w.aliases.length) ? ' (aka: ' + w.aliases.join(', ') + ')' : ''}`).join('; ');\nconst hasGps = trig.lat !== null && trig.lat !== undefined && trig.lat !== '' && !isNaN(parseFloat(trig.lat));\nconst parts = [];\nif (trig.media_type === 'voice' && trig.audio_base64) { parts.push({ inline_data: { mime_type: trig.mime_type || 'audio/ogg', data: trig.audio_base64 } }); }\nelse if (trig.media_type === 'photo' && trig.photo_base64) { parts.push({ inline_data: { mime_type: trig.mime_type || 'image/jpeg', data: trig.photo_base64 } }); }\nconst promptText = `You are the intake brain of a civic platform for Indian citizens. Process this citizen's message (may include audio, an image, and/or text).\\n\\nCitizen text: ${trig.text || '(none \u2014 see attached media)'}\\nLocation text: ${trig.location_text || '(none)'}\\nGPS provided: ${hasGps ? 'yes' : 'no'}\\n\\nOutput ONLY strict JSON, no markdown:\\n{\\n  \\\"intent\\\": \\\"new_issue|status_check|my_ward|help|chitchat\\\",\\n  \\\"language\\\": string,\\n  \\\"transcript\\\": string or null,\\n  \\\"media_description\\\": string or null,\\n  \\\"is_emergency\\\": boolean,\\n  \\\"severity\\\": \\\"low|medium|high|critical\\\",\\n  \\\"issues\\\": [ { \\\"ask\\\": string, \\\"category\\\": \\\"education|water|roads|health|electricity|sanitation|other\\\", \\\"sub_type\\\": string, \\\"urgency_signals\\\": [string] } ],\\n  \\\"status_ref\\\": string or null,\\n  \\\"ward_guess\\\": string or null,\\n  \\\"ack_text\\\": string,\\n  \\\"location_followup\\\": string\\n}\\n\\nField rules:\\n- intent: status_check if they ask about progress/status of earlier complaints (or mention an AWZ-number, put it in status_ref); my_ward ONLY if the citizen is explicitly ASKING to see what issues exist in their area (e.g. what is happening in my ward) and reports NO problem themselves. If the message describes ANY problem or need \u2014 even briefly, and even if it names a ward \u2014 it is new_issue, NOT my_ward. A ward name alone is never enough to choose my_ward; help if they ask what this service is or how to use it; chitchat for greetings/thanks/unrelated talk; otherwise new_issue.\\n- transcript: verbatim transcription if audio given, else null. media_description: factual description if image given, else null.\\n- severity: critical ONLY for immediate danger to life/health (live wires down, building collapse, sewage in drinking water, medical emergencies). is_emergency mirrors that.\\n- issues: EVERY distinct problem the citizen raised, as separate entries (a voice note often contains 2-3). Empty array [] if intent is not new_issue.\\n- ask: one line in English. sub_type: short snake_case. urgency_signals: only if explicitly stated.\\n- ward_guess: EXACT copy of one name from the ward list, or null. NEVER invent.\\n- ack_text: 1-2 warm sentences IN THE CITIZEN'S LANGUAGE. For new_issue: confirm what was understood (mention each problem briefly), never promise the work will be done. For help: briefly explain they can send problems by voice/text/photo and check status anytime. For chitchat: friendly nudge toward sharing any local problem. For critical severity: ALSO tell them to immediately call the local emergency helpline (112) since this platform is not an emergency service.\\n- location_followup: one short question IN THE CITIZEN'S LANGUAGE asking which ward/area/mohalla they live in. Always generate it.\\n\\nWard list: ${wardList}\\n\\nRules: null/[] for anything absent. Never guess.`;\nparts.push({ text: promptText });\nreturn [{ json: { gemini_body: { contents: [{ parts }], generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 3000 } } } }];"
       },
       "name": "Build Gemini Request",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1000, 560],
-      "id": "w3-n10-buildgemini"
+      "position": [
+        -580,
+        800
+      ],
+      "id": "v3-n18"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=YOUR_GEMINI_API_KEY",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [ { "name": "content-type", "value": "application/json" } ] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.gemini_body) }}",
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       },
       "name": "Call Gemini",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [-780, 560],
-      "id": "w3-n11-callgemini",
+      "position": [
+        -360,
+        800
+      ],
+      "id": "v3-n19",
       "retryOnFail": true,
       "maxTries": 2,
       "waitBetweenTries": 1500
     },
     {
       "parameters": {
-        "jsCode": "const trig = $('Execute Workflow Trigger').first().json;\nconst wards = $('Fetch Wards').all().map(i => i.json);\n\nlet extracted = {};\ntry {\n  const raw = $json.candidates?.[0]?.content?.parts?.[0]?.text || '{}';\n  extracted = JSON.parse(raw.replace(/```json|```/g, '').trim());\n} catch (e) {\n  extracted = {};\n}\nconst lang = extracted.language || trig.language_hint || 'hi';\nconst hi = String(lang).startsWith('hi');\nif (!extracted.ask) {\n  extracted = {\n    ...extracted,\n    ask: trig.text || 'unspecified need',\n    category: extracted.category || 'other',\n    sub_type: extracted.sub_type || 'unspecified',\n    urgency_signals: extracted.urgency_signals || [],\n    language: lang,\n    ward_guess: extracted.ward_guess || null,\n    ack_text: extracted.ack_text || (hi ? 'Aapki baat mil gayi, dhanyavaad. Hum jaldi update denge.' : 'We received your message, thank you. We will update you soon.'),\n  };\n}\nif (!extracted.location_followup) {\n  extracted.location_followup = hi ? 'Aap kis ward ya ilaake mein rehte hain?' : 'Which ward or area do you live in?';\n}\n\nfunction pointInRing(pt, ring) {\n  let inside = false;\n  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {\n    const xi = ring[i][0], yi = ring[i][1];\n    const xj = ring[j][0], yj = ring[j][1];\n    const intersect = ((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi);\n    if (intersect) inside = !inside;\n  }\n  return inside;\n}\nfunction pointInGeom(pt, geom) {\n  if (!geom) return false;\n  try {\n    if (geom.type === 'Polygon') return pointInRing(pt, geom.coordinates[0]);\n    if (geom.type === 'MultiPolygon') return geom.coordinates.some(poly => pointInRing(pt, poly[0]));\n  } catch (e) { return false; }\n  return false;\n}\n\nlet ward_id = null, ward_resolution = 'pending';\nconst lat = parseFloat(trig.lat), lng = parseFloat(trig.lng);\nif (!isNaN(lat) && !isNaN(lng)) {\n  const match = wards.find(w => pointInGeom([lng, lat], w.geom));\n  if (match) { ward_id = match.id; ward_resolution = 'gps'; }\n}\nif (!ward_id && extracted.ward_guess) {\n  const guess = String(extracted.ward_guess).toLowerCase().trim();\n  const match = wards.find(w =>\n    w.name.toLowerCase() === guess ||\n    (w.aliases || []).some(a => a.toLowerCase() === guess)\n  );\n  if (match) { ward_id = match.id; ward_resolution = 'alias_match'; }\n}\n\nreturn [{ json: {\n  channel: trig.channel,\n  citizen_key: trig.citizen_key,\n  media_type: trig.media_type,\n  text: trig.text,\n  transcript: extracted.transcript || null,\n  media_description: extracted.media_description || null,\n  ask: extracted.ask,\n  category: extracted.category,\n  sub_type: extracted.sub_type,\n  urgency_signals: extracted.urgency_signals || [],\n  language: extracted.language || lang,\n  lat: trig.lat, lng: trig.lng, location_text: trig.location_text,\n  ward_id, ward_resolution,\n  ack_text: extracted.ack_text,\n  followup_text: extracted.location_followup,\n} }];"
+        "jsCode": "const trig = $('Execute Workflow Trigger').first().json;\nconst wards = $('Fetch Wards').all().map(i => i.json);\nlet ex = {};\ntry {\n  const parts = $json.candidates?.[0]?.content?.parts || [];\n  let raw = '';\n  for (const p of parts) { if (p && typeof p.text === 'string' && p.text.trim()) { raw = p.text; break; } }\n  raw = raw.replace(/```json/gi, '').replace(/```/g, '').trim();\n  const s = raw.indexOf('{'), e = raw.lastIndexOf('}');\n  if (s >= 0 && e > s) raw = raw.slice(s, e + 1);\n  ex = JSON.parse(raw);\n} catch (err) { ex = {}; }\nconst lang = ex.language || trig.language_hint || 'hi';\nconst hi = String(lang).startsWith('hi');\nif (!ex.intent) ex.intent = 'new_issue';\nif (!Array.isArray(ex.issues)) ex.issues = [];\nif (ex.intent === 'new_issue' && ex.issues.length === 0 && (trig.text || ex.transcript)) {\n  ex.issues = [{ ask: trig.text || ex.transcript || 'unspecified need', category: 'other', sub_type: 'unspecified', urgency_signals: [] }];\n}\nif (!ex.ack_text) ex.ack_text = hi ? 'Aapki baat mil gayi, dhanyavaad. Hum jaldi update denge.' : 'We received your message, thank you. We will update you soon.';\nif (!ex.location_followup) ex.location_followup = hi ? 'Aap kis ward ya ilaake mein rehte hain?' : 'Which ward or area do you live in?';\nfunction pointInRing(pt, ring) { let inside = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const xi = ring[i][0], yi = ring[i][1]; const xj = ring[j][0], yj = ring[j][1]; const intersect = ((yi > pt[1]) !== (yj > pt[1])) && (pt[0] < (xj - xi) * (pt[1] - yi) / (yj - yi) + xi); if (intersect) inside = !inside; } return inside; }\nfunction pointInGeom(pt, geom) { if (!geom) return false; try { if (geom.type === 'Polygon') return pointInRing(pt, geom.coordinates[0]); if (geom.type === 'MultiPolygon') return geom.coordinates.some(p => pointInRing(pt, p[0])); } catch (e) { return false; } return false; }\nlet ward_id = null, ward_resolution = 'pending';\nconst lat = parseFloat(trig.lat), lng = parseFloat(trig.lng);\nif (!isNaN(lat) && !isNaN(lng)) { const m = wards.find(w => pointInGeom([lng, lat], w.geom)); if (m) { ward_id = m.id; ward_resolution = 'gps'; } }\nif (!ward_id && ex.ward_guess) { const g = String(ex.ward_guess).toLowerCase().trim(); const m = wards.find(w => w.name.toLowerCase() === g || (w.aliases || []).some(a => a.toLowerCase() === g)); if (m) { ward_id = m.id; ward_resolution = 'alias_match'; } }\nreturn [{ json: {\n  intent: ex.intent, language: lang,\n  channel: trig.channel, citizen_key: trig.citizen_key, media_type: trig.media_type,\n  text: trig.text, transcript: ex.transcript || null, media_description: ex.media_description || null,\n  is_emergency: !!ex.is_emergency, severity: ex.severity || 'low',\n  issues: ex.issues, issues_count: ex.issues.length,\n  status_ref: ex.status_ref || null,\n  lat: trig.lat, lng: trig.lng, location_text: trig.location_text,\n  ward_id, ward_resolution,\n  ack_text: ex.ack_text, followup_text: ex.location_followup,\n  channel_message_id: trig.channel_message_id || null,\n} }];"
       },
-      "name": "Parse & Resolve Ward",
+      "name": "Parse & Route",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-560, 560],
-      "id": "w3-n12-parseward"
+      "position": [
+        -140,
+        800
+      ],
+      "id": "v3-n20"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO citizens (channel, channel_user_id, ward_id, language)\nVALUES ($1, $2, $3, $4)\nON CONFLICT (channel, channel_user_id) DO UPDATE\n  SET ward_id = COALESCE(citizens.ward_id, EXCLUDED.ward_id), language = EXCLUDED.language\nRETURNING id;",
-        "options": { "queryReplacement": "={{ $json.channel }},{{ $json.citizen_key }},{{ $json.ward_id }},{{ $json.language }}" }
+        "query": "INSERT INTO citizens (channel, channel_user_id, ward_id, language) VALUES ($1, $2, $3, $4) ON CONFLICT (channel, channel_user_id) DO UPDATE SET ward_id = COALESCE(citizens.ward_id, EXCLUDED.ward_id), language = EXCLUDED.language RETURNING id, ward_id;",
+        "options": {
+          "queryReplacement": "={{ $json.channel }},{{ $json.citizen_key }},{{ $json.ward_id }},{{ $json.language }}"
+        }
       },
       "name": "Upsert Citizen",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.4,
-      "position": [-340, 560],
-      "id": "w3-n13-upsertcitizen",
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
+      "position": [
+        80,
+        800
+      ],
+      "id": "v3-n21",
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parse & Route').first().json.intent }}",
+                    "rightValue": "status_check",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "status"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Parse & Route').first().json.intent }}",
+                    "rightValue": "my_ward",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "my_ward"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "new_issue"
+        }
+      },
+      "name": "Intent Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        300,
+        800
+      ],
+      "id": "v3-n22"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT s.id, s.ask, s.category, s.created_at::date AS created_on,\n  COALESCE(r.status, CASE WHEN ts.theme_id IS NOT NULL THEN 'under_review' ELSE 'received' END) AS status\nFROM submissions s\nJOIN citizens c ON c.id = s.citizen_id\nLEFT JOIN theme_submissions ts ON ts.submission_id = s.id\nLEFT JOIN recommendations r ON r.theme_id = ts.theme_id\nWHERE c.channel = $1 AND c.channel_user_id = $2\n  AND ($3::text IS NULL OR s.id = NULLIF(regexp_replace($3, '\\D', '', 'g'), '')::int)\nORDER BY s.created_at DESC LIMIT 5;",
+        "options": {
+          "queryReplacement": "={{ $('Parse & Route').first().json.channel }},{{ $('Parse & Route').first().json.citizen_key }},{{ $('Parse & Route').first().json.status_ref }}"
+        }
+      },
+      "name": "Status Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        560
+      ],
+      "id": "v3-n23",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p = $('Parse & Route').first().json;\nconst hi = String(p.language || 'hi').startsWith('hi');\nconst rows = $input.all().filter(i => i.json && i.json.id !== undefined && i.json.id !== null).map(i => i.json);\nconst statusHi = { received: 'darj ho gayi hai', under_review: 'sameeksha mein hai', proposed: 'MP ke dashboard par prastavit hai', taken_up: 'MP ne aage badha di hai \u2705', in_progress: 'kaam chal raha hai \ud83d\udd28', completed: 'poora ho gaya hai \ud83c\udf89', rejected: 'is baar nahi chuni gayi' };\nconst statusEn = { received: 'received', under_review: 'under review', proposed: 'proposed on the MP dashboard', taken_up: 'taken up by the MP \u2705', in_progress: 'work in progress \ud83d\udd28', completed: 'completed \ud83c\udf89', rejected: 'not selected this time' };\nlet ack;\nif (!rows.length) {\n  ack = hi ? 'Aapki koi shikayat abhi record mein nahi mili. Koi bhi samasya bhejein \u2014 voice, photo ya likh kar!' : 'We could not find any submissions from you yet. Send any local problem \u2014 voice, photo, or text!';\n} else {\n  const lines = rows.map(r => `\ud83d\udccb AWZ-${r.id}: ${r.ask} \u2014 ${(hi ? statusHi : statusEn)[r.status] || r.status}`);\n  ack = (hi ? 'Aapki shikayaton ki sthiti:\\n' : 'Status of your submissions:\\n') + lines.join('\\n');\n}\nreturn [{ json: { mode: 'status', ack_text: ack, followup_text: '', voice_url: null, submission_ids: rows.map(r => r.id), public_ids: rows.map(r => 'AWZ-' + r.id) } }];"
+      },
+      "name": "Status Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        560
+      ],
+      "id": "v3-n24"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT s.category, COUNT(*)::int AS n FROM submissions s WHERE s.ward_id = $1 AND $1 IS NOT NULL AND s.created_at > now() - interval '90 days' GROUP BY s.category ORDER BY n DESC LIMIT 5;",
+        "options": {
+          "queryReplacement": "={{ $('Upsert Citizen').first().json.ward_id }}"
+        }
+      },
+      "name": "Ward Themes Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        520,
+        800
+      ],
+      "id": "v3-n25",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p = $('Parse & Route').first().json;\nconst hi = String(p.language || 'hi').startsWith('hi');\nconst rows = $input.all().filter(i => i.json && i.json.category).map(i => i.json);\nconst catHi = { education: 'Shiksha', water: 'Paani', roads: 'Sadak', health: 'Swasthya', electricity: 'Bijli', sanitation: 'Safai', other: 'Anya' };\nlet ack;\nif (!rows.length) {\n  ack = hi ? 'Aapke ilaake se abhi tak koi shikayat darj nahi hui, ya aapka ward abhi confirm nahi hai. Apni samasya bhej kar shuruaat karein!' : 'No issues recorded from your area yet, or your ward is not confirmed. Be the first to raise one!';\n} else {\n  const lines = rows.map(r => `\u2022 ${hi ? (catHi[r.category] || r.category) : r.category}: ${r.n} ${hi ? 'shikayatein' : 'reports'}`);\n  ack = (hi ? 'Aapke ward ke sabse bade mudde (pichhle 90 din):\\n' : 'Top issues in your ward (last 90 days):\\n') + lines.join('\\n');\n}\nreturn [{ json: { mode: 'my_ward', ack_text: ack, followup_text: '', voice_url: null, submission_ids: [], public_ids: [] } }];"
+      },
+      "name": "My Ward Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        800
+      ],
+      "id": "v3-n26"
     },
     {
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $('Parse & Route').first().json.issues_count }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Has Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        520,
+        1060
+      ],
+      "id": "v3-n27"
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Parse & Route').first().json;\nreturn [{ json: { mode: 'conversation', ack_text: p.ack_text, followup_text: '', voice_url: null, submission_ids: [], public_ids: [] } }];"
+      },
+      "name": "Conversational Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        1240
+      ],
+      "id": "v3-n28"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
           "combinator": "or",
           "conditions": [
-            { "leftValue": "={{ $('Parse & Resolve Ward').first().json.media_type }}", "rightValue": "voice", "operator": { "type": "string", "operation": "equals" } },
-            { "leftValue": "={{ $('Parse & Resolve Ward').first().json.media_type }}", "rightValue": "photo", "operator": { "type": "string", "operation": "equals" } }
+            {
+              "leftValue": "={{ $('Parse & Route').first().json.media_type }}",
+              "rightValue": "voice",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "leftValue": "={{ $('Parse & Route').first().json.media_type }}",
+              "rightValue": "photo",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
           ]
         },
         "options": {}
@@ -193,18 +688,24 @@
       "name": "Has Media?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [-120, 560],
-      "id": "w3-n14-hasmedia"
+      "position": [
+        740,
+        1020
+      ],
+      "id": "v3-n29"
     },
     {
       "parameters": {
-        "jsCode": "const src = $('Parse & Resolve Ward').first().json;\nconst trig = $('Execute Workflow Trigger').first().json;\nconst b64 = src.media_type === 'voice' ? trig.audio_base64 : trig.photo_base64;\nconst mime = trig.mime_type || (src.media_type === 'voice' ? 'audio/ogg' : 'image/jpeg');\nconst ext = (mime.split('/')[1] || 'bin').split(';')[0];\nconst fileName = `${src.channel}-${Date.now()}.${ext}`;\nconst buffer = Buffer.from(b64, 'base64');\nconst binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mime);\nreturn [{ json: { media_filename: fileName, media_mime: mime }, binary: { data: binaryData } }];"
+        "jsCode": "const src = $('Parse & Route').first().json;\nconst trig = $('Execute Workflow Trigger').first().json;\nconst b64 = src.media_type === 'voice' ? trig.audio_base64 : trig.photo_base64;\nconst mime = trig.mime_type || (src.media_type === 'voice' ? 'audio/ogg' : 'image/jpeg');\nconst ext = (mime.split('/')[1] || 'bin').split(';')[0];\nconst fileName = `${src.channel}-${Date.now()}.${ext}`;\nconst buffer = Buffer.from(b64, 'base64');\nconst binaryData = await this.helpers.prepareBinaryData(buffer, fileName, mime);\nreturn [{ json: { media_filename: fileName, media_mime: mime }, binary: { data: binaryData } }];"
       },
       "name": "Prepare Binary",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [100, 440],
-      "id": "w3-n15-preparebinary"
+      "position": [
+        960,
+        900
+      ],
+      "id": "v3-n30"
     },
     {
       "parameters": {
@@ -213,9 +714,18 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "apikey", "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY" },
-            { "name": "Authorization", "value": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY" },
-            { "name": "Content-Type", "value": "={{ $json.media_mime }}" }
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{ $json.media_mime }}"
+            }
           ]
         },
         "sendBody": true,
@@ -223,105 +733,945 @@
         "inputDataFieldName": "data",
         "options": {}
       },
-      "name": "Upload Media to Supabase",
+      "name": "Upload Media",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [320, 440],
-      "id": "w3-n16-uploadmedia"
+      "position": [
+        1180,
+        900
+      ],
+      "id": "v3-n31"
     },
     {
       "parameters": {
-        "jsCode": "const filename = $('Prepare Binary').first().json.media_filename;\nconst url = `https://YOUR_SUPABASE_PROJECT_REF.supabase.co/storage/v1/object/public/media/${filename}`;\nreturn [{ json: { media_ref: url } }];"
+        "jsCode": "const filename = $('Prepare Binary').first().json.media_filename;\nreturn [{ json: { media_ref: `https://YOUR_SUPABASE_PROJECT_REF.supabase.co/storage/v1/object/public/media/${filename}` } }];"
       },
-      "name": "Build Media Ref",
+      "name": "Media Ref",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [540, 440],
-      "id": "w3-n17-buildmediaref"
+      "position": [
+        1400,
+        900
+      ],
+      "id": "v3-n32"
     },
     {
-      "parameters": { "jsCode": "return [{ json: { media_ref: null } }];" },
+      "parameters": {
+        "jsCode": "return [{ json: { media_ref: null } }];"
+      },
       "name": "No Media",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [100, 680],
-      "id": "w3-n18-nomedia"
+      "position": [
+        960,
+        1140
+      ],
+      "id": "v3-n33"
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO submissions\n  (citizen_id, channel, media_type, raw_text, transcript, media_ref, ask, category,\n   sub_type, urgency_signals, language, lat, lng, location_text, ward_id, ward_resolution)\nVALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)\nRETURNING id;",
-        "options": {
-          "queryReplacement": "={{ $('Upsert Citizen').first().json.id }},{{ $('Parse & Resolve Ward').first().json.channel }},{{ $('Parse & Resolve Ward').first().json.media_type }},{{ $('Parse & Resolve Ward').first().json.text }},{{ $('Parse & Resolve Ward').first().json.transcript }},{{ $json.media_ref }},{{ $('Parse & Resolve Ward').first().json.ask }},{{ $('Parse & Resolve Ward').first().json.category }},{{ $('Parse & Resolve Ward').first().json.sub_type }},{{ $('Parse & Resolve Ward').first().json.urgency_signals }},{{ $('Parse & Resolve Ward').first().json.language }},{{ $('Parse & Resolve Ward').first().json.lat }},{{ $('Parse & Resolve Ward').first().json.lng }},{{ $('Parse & Resolve Ward').first().json.location_text }},{{ $('Parse & Resolve Ward').first().json.ward_id }},{{ $('Parse & Resolve Ward').first().json.ward_resolution }}"
-        }
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p = $('Parse & Route').first().json;\nconst media_ref = $input.first().json.media_ref;\nreturn p.issues.map((iss, idx) => ({ json: {\n  issue_index: idx,\n  ask: iss.ask, category: iss.category || 'other', sub_type: iss.sub_type || 'unspecified',\n  urgency_signals: iss.urgency_signals || [],\n  media_ref: media_ref,\n} }));"
       },
-      "name": "Insert Submission",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.4,
-      "position": [320, 560],
-      "id": "w3-n19-insertsubmission",
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO events (ref_type, ref_id, kind, payload) VALUES ('submission', $1, 'created', jsonb_build_object('channel', $2, 'category', $3));",
-        "options": { "queryReplacement": "={{ $json.id }},{{ $('Parse & Resolve Ward').first().json.channel }},{{ $('Parse & Resolve Ward').first().json.category }}" }
-      },
-      "name": "Log Submission Event",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.4,
-      "position": [540, 560],
-      "id": "w3-n20-logsubmission",
-      "alwaysOutputData": true,
-      "credentials": { "postgres": { "id": "REPLACE_POSTGRES_CRED", "name": "Supabase Postgres" } }
-    },
-    {
-      "parameters": {
-        "jsCode": "const parsed = $('Parse & Resolve Ward').first().json;\nconst submissionId = $('Insert Submission').first().json.id;\nreturn [{ json: {\n  submission_id: submissionId,\n  ack_text: parsed.ack_text,\n  followup_text: parsed.ward_resolution === 'pending' ? parsed.followup_text : '',\n  ward_resolution: parsed.ward_resolution,\n  category: parsed.category,\n  ask: parsed.ask,\n  mode: 'new',\n} }];"
-      },
-      "name": "Build Response",
+      "name": "Split Issues",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [760, 560],
-      "id": "w3-n21-buildresponse"
+      "position": [
+        1620,
+        1020
+      ],
+      "id": "v3-n34"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=YOUR_GEMINI_API_KEY",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'models/gemini-embedding-001', content: { parts: [{ text: $json.category + ': ' + $json.ask }] }, outputDimensionality: 768 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Embed Issue",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1840,
+        1020
+      ],
+      "id": "v3-n35",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const split = $('Split Issues').item.json;\nconst vals = $json.embedding && $json.embedding.values ? $json.embedding.values : null;\nreturn { json: { ...split, embedding_str: vals ? '[' + vals.join(',') + ']' : null } };"
+      },
+      "name": "Attach Embedding",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2060,
+        1020
+      ],
+      "id": "v3-n36"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*)::int AS similar_count FROM submissions WHERE ward_id = $1 AND $1 IS NOT NULL AND category = $2 AND embedding IS NOT NULL AND $3::text IS NOT NULL AND embedding <=> $3::vector < 0.35;",
+        "options": {
+          "queryReplacement": "={{ $('Parse & Route').first().json.ward_id }},{{ $json.category }},{{ $json.embedding_str }}"
+        }
+      },
+      "name": "Similar Count",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        2280,
+        1020
+      ],
+      "id": "v3-n37",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const prev = $('Attach Embedding').item.json;\nconst sc = $json.similar_count !== undefined ? $json.similar_count : 0;\nreturn { json: { ...prev, similar_count: sc } };"
+      },
+      "name": "Merge Similar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2500,
+        1020
+      ],
+      "id": "v3-n38"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO submissions (citizen_id, channel, media_type, raw_text, transcript, media_ref, ask, category, sub_type, urgency_signals, language, lat, lng, location_text, ward_id, ward_resolution, severity, channel_message_id, embedding)\nVALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18, CASE WHEN $19::text IS NULL THEN NULL ELSE $19::vector END)\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ $('Upsert Citizen').first().json.id }},{{ $('Parse & Route').first().json.channel }},{{ $('Parse & Route').first().json.media_type }},{{ $('Parse & Route').first().json.text }},{{ $('Parse & Route').first().json.transcript }},{{ $json.media_ref }},{{ $json.ask }},{{ $json.category }},{{ $json.sub_type }},{{ $json.urgency_signals }},{{ $('Parse & Route').first().json.language }},{{ $('Parse & Route').first().json.lat }},{{ $('Parse & Route').first().json.lng }},{{ $('Parse & Route').first().json.location_text }},{{ $('Parse & Route').first().json.ward_id }},{{ $('Parse & Route').first().json.ward_resolution }},{{ $('Parse & Route').first().json.severity }},{{ $('Parse & Route').first().json.channel_message_id }},{{ $json.embedding_str }}"
+        }
+      },
+      "name": "Insert Issue",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        2720,
+        1020
+      ],
+      "id": "v3-n39",
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO events (ref_type, ref_id, kind, payload) VALUES ('submission', $1, 'created', jsonb_build_object('channel', $2, 'severity', $3));",
+        "options": {
+          "queryReplacement": "={{ $json.id }},{{ $('Parse & Route').first().json.channel }},{{ $('Parse & Route').first().json.severity }}"
+        }
+      },
+      "name": "Log Created",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        2940,
+        1020
+      ],
+      "id": "v3-n40",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_POSTGRES_CRED",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const p = $('Parse & Route').first().json;\nconst hi = String(p.language || 'hi').startsWith('hi');\nconst inserted = $('Insert Issue').all().map(i => i.json.id);\nconst issues = $('Merge Similar').all().map(i => i.json);\nconst tips = {\n  water: { hi: '\ud83d\udca7 Kya aap jaante hain? Jal Jeevan Mission ke antargat har ghar ko nal se jal ka adhikar hai.', en: '\ud83d\udca7 Did you know? Under Jal Jeevan Mission, every household is entitled to a tap water connection.' },\n  education: { hi: '\ud83d\udcda Kya aap jaante hain? RTE ke antargat 6-14 saal ke har bachche ko muft shiksha ka adhikar hai.', en: '\ud83d\udcda Did you know? Under RTE, every child aged 6-14 has the right to free education.' },\n  roads: { hi: '\ud83d\udee3\ufe0f PMGSY ka lakshya har basti ko pakki sadak se jodna hai.', en: '\ud83d\udee3\ufe0f PMGSY aims to connect every habitation with an all-weather road.' },\n  health: { hi: '\ud83c\udfe5 Ayushman Bharat ke antargat patra parivaron ko 5 lakh tak ka muft ilaaj milta hai.', en: '\ud83c\udfe5 Under Ayushman Bharat, eligible families get free treatment up to 5 lakh.' },\n  electricity: { hi: '\u26a1 Saubhagya yojana ke antargat har ghar tak bijli pahunchana sarkar ka lakshya hai.', en: '\u26a1 The Saubhagya scheme aims to bring electricity to every household.' },\n  sanitation: { hi: '\ud83d\udebd Swachh Bharat Mission ke antargat saaf-safai har nagrik ka adhikar hai.', en: '\ud83d\udebd Under Swachh Bharat Mission, sanitation is every citizen\\'s right.' },\n};\nconst lines = issues.map((iss, i) => {\n  const id = inserted[i];\n  let line = `\ud83d\udccb AWZ-${id}: ${iss.ask}`;\n  if (iss.similar_count > 0) {\n    line += hi ? ` \u2014 aapke ilaake mein ${iss.similar_count} aur logon ne bhi yahi samasya uthayi hai \ud83e\udd1d` : ` \u2014 ${iss.similar_count} others in your area have raised this too \ud83e\udd1d`;\n  }\n  return line;\n});\nlet ack = p.ack_text + '\\n\\n' + lines.join('\\n');\nconst firstCat = issues[0] ? issues[0].category : null;\nif (firstCat && tips[firstCat]) { ack += '\\n\\n' + (hi ? tips[firstCat].hi : tips[firstCat].en); }\nack += '\\n\\n' + (hi ? 'Kabhi bhi \\'status\\' bhej kar apni shikayat ki sthiti jaanein.' : 'Send \\'status\\' anytime to check on your submissions.');\nreturn [{ json: {\n  mode: 'new_issue',\n  ack_text: ack,\n  followup_text: p.ward_resolution === 'pending' ? p.followup_text : '',\n  voice_url: null,\n  submission_ids: inserted,\n  public_ids: inserted.map(id => 'AWZ-' + id),\n  similar_counts: issues.map(i => i.similar_count),\n  severity: p.severity, is_emergency: p.is_emergency,\n  ward_resolution: p.ward_resolution, language: p.language, media_type: p.media_type,\n} }];"
+      },
+      "name": "Aggregate Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3160,
+        1020
+      ],
+      "id": "v3-n41"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.is_emergency }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Emergency?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3380,
+        1020
+      ],
+      "id": "v3-n42"
+    },
+    {
+      "parameters": {
+        "chatId": "ADMIN_CHAT_ID",
+        "text": "=\ud83d\udea8 CRITICAL submission {{ $json.public_ids.join(', ') }} \u2014 severity: {{ $json.severity }}. Check the dashboard immediately.",
+        "additionalFields": {}
+      },
+      "name": "Alert Admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3600,
+        880
+      ],
+      "id": "v3-n43",
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TELEGRAM_CRED",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.media_type }}",
+              "rightValue": "voice",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Voice Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3600,
+        1120
+      ],
+      "id": "v3-n44"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r = $input.first().json;\nconst hi = String(r.language || 'hi').startsWith('hi');\nconst plain = String(r.ack_text || '').replace(/[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/gu, '').replace(/AWZ-(\\d+)/g, hi ? 'A W Z $1' : 'A W Z $1').slice(0, 450);\nreturn [{ json: { ...r, tts_body: { input: { text: plain }, voice: { languageCode: hi ? 'hi-IN' : 'en-IN', ssmlGender: 'FEMALE' }, audioConfig: { audioEncoding: 'OGG_OPUS', speakingRate: 0.95 } } } }];"
+      },
+      "name": "Build TTS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3820,
+        1040
+      ],
+      "id": "v3-n45"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://texttospeech.googleapis.com/v1/text:synthesize?key=YOUR_GCP_TTS_API_KEY",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.tts_body) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "name": "Call TTS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4040,
+        1040
+      ],
+      "id": "v3-n46",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const resp = $input.first().json;\nif (!resp.audioContent) { return [{ json: { skip_voice: true } }]; }\nconst fileName = `ack-${Date.now()}.ogg`;\nconst buffer = Buffer.from(resp.audioContent, 'base64');\nconst binaryData = await this.helpers.prepareBinaryData(buffer, fileName, 'audio/ogg');\nreturn [{ json: { voice_filename: fileName, skip_voice: false }, binary: { data: binaryData } }];"
+      },
+      "name": "Prepare Voice Binary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4260,
+        1040
+      ],
+      "id": "v3-n47"
+    },
+    {
+      "parameters": {
+        "method": "PUT",
+        "url": "=https://YOUR_SUPABASE_PROJECT_REF.supabase.co/storage/v1/object/media/{{ $json.voice_filename }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "audio/ogg"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "name": "Upload Voice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4480,
+        1040
+      ],
+      "id": "v3-n48",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const agg = $('Aggregate Response').first().json;\nconst prep = $('Prepare Voice Binary').first().json;\nconst voice_url = (prep && !prep.skip_voice) ? `https://YOUR_SUPABASE_PROJECT_REF.supabase.co/storage/v1/object/public/media/${prep.voice_filename}` : null;\nreturn [{ json: { ...agg, voice_url } }];"
+      },
+      "name": "Final With Voice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4700,
+        1040
+      ],
+      "id": "v3-n49"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: $input.first().json }];"
+      },
+      "name": "Final Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3820,
+        1260
+      ],
+      "id": "v3-n50"
     }
   ],
   "pinData": {},
   "connections": {
-    "Execute Workflow Trigger": { "main": [[ { "node": "Fetch Wards", "type": "main", "index": 0 } ]] },
-    "Fetch Wards": { "main": [[ { "node": "Check Pending", "type": "main", "index": 0 } ]] },
-    "Check Pending": { "main": [[ { "node": "Pending Flag", "type": "main", "index": 0 } ]] },
-    "Pending Flag": { "main": [[ { "node": "Pending Exists?", "type": "main", "index": 0 } ]] },
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Dedupe Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe Check": {
+      "main": [
+        [
+          {
+            "node": "Dedupe Flag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedupe Flag": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Duplicate Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rate Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Check": {
+      "main": [
+        [
+          {
+            "node": "Rate Flag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Flag": {
+      "main": [
+        [
+          {
+            "node": "Throttled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Throttled?": {
+      "main": [
+        [
+          {
+            "node": "Throttle Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fetch Wards",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Wards": {
+      "main": [
+        [
+          {
+            "node": "Check Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Pending": {
+      "main": [
+        [
+          {
+            "node": "Pending Flag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pending Flag": {
+      "main": [
+        [
+          {
+            "node": "Pending Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Pending Exists?": {
       "main": [
-        [ { "node": "Resolve Ward From Reply", "type": "main", "index": 0 } ],
-        [ { "node": "Build Gemini Request", "type": "main", "index": 0 } ]
+        [
+          {
+            "node": "Resolve Ward From Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Gemini Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Resolve Ward From Reply": { "main": [[ { "node": "Update Pending Submission", "type": "main", "index": 0 } ]] },
-    "Update Pending Submission": { "main": [[ { "node": "Log Ward Event", "type": "main", "index": 0 } ]] },
-    "Log Ward Event": { "main": [[ { "node": "Build Ward Ack", "type": "main", "index": 0 } ]] },
-    "Build Gemini Request": { "main": [[ { "node": "Call Gemini", "type": "main", "index": 0 } ]] },
-    "Call Gemini": { "main": [[ { "node": "Parse & Resolve Ward", "type": "main", "index": 0 } ]] },
-    "Parse & Resolve Ward": { "main": [[ { "node": "Upsert Citizen", "type": "main", "index": 0 } ]] },
-    "Upsert Citizen": { "main": [[ { "node": "Has Media?", "type": "main", "index": 0 } ]] },
+    "Resolve Ward From Reply": {
+      "main": [
+        [
+          {
+            "node": "Update Pending Submission",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Pending Submission": {
+      "main": [
+        [
+          {
+            "node": "Log Ward Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Ward Event": {
+      "main": [
+        [
+          {
+            "node": "Ward Ack Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Gemini Request": {
+      "main": [
+        [
+          {
+            "node": "Call Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Gemini": {
+      "main": [
+        [
+          {
+            "node": "Parse & Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Route": {
+      "main": [
+        [
+          {
+            "node": "Upsert Citizen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Citizen": {
+      "main": [
+        [
+          {
+            "node": "Intent Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Switch": {
+      "main": [
+        [
+          {
+            "node": "Status Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ward Themes Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Has Issues?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status Query": {
+      "main": [
+        [
+          {
+            "node": "Status Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ward Themes Query": {
+      "main": [
+        [
+          {
+            "node": "My Ward Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Issues?": {
+      "main": [
+        [
+          {
+            "node": "Has Media?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Conversational Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Has Media?": {
       "main": [
-        [ { "node": "Prepare Binary", "type": "main", "index": 0 } ],
-        [ { "node": "No Media", "type": "main", "index": 0 } ]
+        [
+          {
+            "node": "Prepare Binary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Prepare Binary": { "main": [[ { "node": "Upload Media to Supabase", "type": "main", "index": 0 } ]] },
-    "Upload Media to Supabase": { "main": [[ { "node": "Build Media Ref", "type": "main", "index": 0 } ]] },
-    "Build Media Ref": { "main": [[ { "node": "Insert Submission", "type": "main", "index": 0 } ]] },
-    "No Media": { "main": [[ { "node": "Insert Submission", "type": "main", "index": 0 } ]] },
-    "Insert Submission": { "main": [[ { "node": "Log Submission Event", "type": "main", "index": 0 } ]] },
-    "Log Submission Event": { "main": [[ { "node": "Build Response", "type": "main", "index": 0 } ]] }
+    "Prepare Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload Media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Media": {
+      "main": [
+        [
+          {
+            "node": "Media Ref",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Media Ref": {
+      "main": [
+        [
+          {
+            "node": "Split Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Media": {
+      "main": [
+        [
+          {
+            "node": "Split Issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Issues": {
+      "main": [
+        [
+          {
+            "node": "Embed Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embed Issue": {
+      "main": [
+        [
+          {
+            "node": "Attach Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Attach Embedding": {
+      "main": [
+        [
+          {
+            "node": "Similar Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Similar Count": {
+      "main": [
+        [
+          {
+            "node": "Merge Similar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Similar": {
+      "main": [
+        [
+          {
+            "node": "Insert Issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Issue": {
+      "main": [
+        [
+          {
+            "node": "Log Created",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Created": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Response": {
+      "main": [
+        [
+          {
+            "node": "Emergency?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emergency?": {
+      "main": [
+        [
+          {
+            "node": "Alert Admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Voice Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Admin": {
+      "main": [
+        [
+          {
+            "node": "Voice Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voice Reply?": {
+      "main": [
+        [
+          {
+            "node": "Build TTS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TTS": {
+      "main": [
+        [
+          {
+            "node": "Call TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call TTS": {
+      "main": [
+        [
+          {
+            "node": "Prepare Voice Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Voice Binary": {
+      "main": [
+        [
+          {
+            "node": "Upload Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Voice": {
+      "main": [
+        [
+          {
+            "node": "Final With Voice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "meta": { "templateCredsSetupCompleted": false },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
   "id": "REPLACE_AFTER_IMPORT",
   "tags": []
 }

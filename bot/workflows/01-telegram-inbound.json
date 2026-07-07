@@ -2,23 +2,39 @@
   "name": "01 - Telegram Inbound",
   "nodes": [
     {
-      "parameters": { "updates": ["message"], "additionalFields": {} },
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.1,
-      "position": [-1760, 400],
+      "position": [
+        -1760,
+        400
+      ],
       "webhookId": "awaaz-telegram-inbound",
       "id": "w1-n1-trigger",
-      "credentials": { "telegramApi": { "id": "REPLACE_TELEGRAM_CRED", "name": "Telegram account" } }
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TELEGRAM_CRED",
+          "name": "Telegram account"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "const m = $json.message || {};\nreturn [{ json: {\n  chat_id: String(m.chat?.id || ''),\n  text: m.text || m.caption || '',\n  media_type: 'text',\n  photo_base64: null,\n  audio_base64: null,\n  mime_type: null,\n  has_voice: !!m.voice,\n  voice_file_id: m.voice?.file_id || null,\n  has_photo: !!m.photo,\n  photo_file_id: m.photo ? m.photo[m.photo.length - 1].file_id : null,\n  lat: m.location?.latitude ?? null,\n  lng: m.location?.longitude ?? null,\n  location_text: null,\n  language_hint: m.from?.language_code || null,\n  channel: 'telegram',\n  citizen_key: String(m.chat?.id || ''),\n} }];"
+        "jsCode": "const m = $json.message || {};\nreturn [{ json: {\n  chat_id: String(m.chat?.id || ''),\n  text: m.text || m.caption || '',\n  media_type: 'text',\n  photo_base64: null,\n  audio_base64: null,\n  mime_type: null,\n  has_voice: !!m.voice,\n  voice_file_id: m.voice?.file_id || null,\n  has_photo: !!m.photo,\n  photo_file_id: m.photo ? m.photo[m.photo.length - 1].file_id : null,\n  lat: m.location?.latitude ?? null,\n  lng: m.location?.longitude ?? null,\n  location_text: null,\n  language_hint: m.from?.language_code || null,\n  channel: 'telegram',\n  citizen_key: String(m.chat?.id || ''),\n  channel_message_id: 'tg-' + String(m.message_id || ''),\n} }];"
       },
       "name": "Normalize Update",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-1536, 400],
+      "position": [
+        -1536,
+        400
+      ],
       "id": "w1-n2-normalize"
     },
     {
@@ -27,38 +43,88 @@
           "values": [
             {
               "conditions": {
-                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
                 "combinator": "and",
-                "conditions": [ { "leftValue": "={{ $json.has_photo }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ]
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.has_photo }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
               },
-              "renameOutput": true, "outputKey": "photo"
+              "renameOutput": true,
+              "outputKey": "photo"
             },
             {
               "conditions": {
-                "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
                 "combinator": "and",
-                "conditions": [ { "leftValue": "={{ $json.has_voice }}", "rightValue": true, "operator": { "type": "boolean", "operation": "true", "singleValue": true } } ]
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.has_voice }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ]
               },
-              "renameOutput": true, "outputKey": "voice"
+              "renameOutput": true,
+              "outputKey": "voice"
             }
           ]
         },
-        "options": { "fallbackOutput": "extra", "renameFallbackOutput": "text" }
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "text"
+        }
       },
       "name": "Message Type",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [-1312, 400],
+      "position": [
+        -1312,
+        400
+      ],
       "id": "w1-n3-msgtype"
     },
     {
-      "parameters": { "resource": "file", "fileId": "={{ $json.photo_file_id }}", "additionalFields": {} },
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.photo_file_id }}",
+        "additionalFields": {}
+      },
       "name": "Download Photo",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [-1088, 240],
+      "position": [
+        -1088,
+        240
+      ],
       "id": "w1-n4-downloadphoto",
-      "credentials": { "telegramApi": { "id": "REPLACE_TELEGRAM_CRED", "name": "Telegram account" } }
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TELEGRAM_CRED",
+          "name": "Telegram account"
+        }
+      }
     },
     {
       "parameters": {
@@ -67,17 +133,32 @@
       "name": "Photo to Base64",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-864, 240],
+      "position": [
+        -864,
+        240
+      ],
       "id": "w1-n5-photob64"
     },
     {
-      "parameters": { "resource": "file", "fileId": "={{ $json.voice_file_id }}", "additionalFields": {} },
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.voice_file_id }}",
+        "additionalFields": {}
+      },
       "name": "Download Voice",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [-1088, 400],
+      "position": [
+        -1088,
+        400
+      ],
       "id": "w1-n6-downloadvoice",
-      "credentials": { "telegramApi": { "id": "REPLACE_TELEGRAM_CRED", "name": "Telegram account" } }
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TELEGRAM_CRED",
+          "name": "Telegram account"
+        }
+      }
     },
     {
       "parameters": {
@@ -86,12 +167,20 @@
       "name": "Voice to Base64",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-864, 400],
+      "position": [
+        -864,
+        400
+      ],
       "id": "w1-n7-voiceb64"
     },
     {
       "parameters": {
-        "workflowId": { "__rl": true, "value": "REPLACE_WITH_W3_WORKFLOW_ID", "mode": "list", "cachedResultName": "03 - Process Submission" },
+        "workflowId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_W3_WORKFLOW_ID",
+          "mode": "list",
+          "cachedResultName": "03 - Process Submission"
+        },
         "workflowInputs": {
           "mappingMode": "defineBelow",
           "value": {
@@ -105,7 +194,8 @@
             "lat": "={{ $json.lat }}",
             "lng": "={{ $json.lng }}",
             "location_text": "={{ $json.location_text }}",
-            "language_hint": "={{ $json.language_hint }}"
+            "language_hint": "={{ $json.language_hint }}",
+            "channel_message_id": "={{ $json.channel_message_id }}"
           },
           "attemptToConvertTypes": true,
           "convertFieldsToString": true
@@ -115,54 +205,300 @@
       "name": "Run W3",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.3,
-      "position": [-640, 400],
+      "position": [
+        -640,
+        400
+      ],
       "id": "w1-n8-runw3"
     },
     {
       "parameters": {
-        "jsCode": "const r = $json;\nconst reply = [r.ack_text, r.followup_text].filter(Boolean).join(' ');\nreturn [{ json: { reply_text: reply || 'Dhanyavaad!' , chat_id: $('Normalize Update').first().json.chat_id } }];"
+        "jsCode": "const r = $json;\nconst reply = [r.ack_text, r.followup_text].filter(Boolean).join(' ');\nreturn [{ json: { reply_text: reply, voice_url: r.voice_url || null, has_reply: !!reply, chat_id: $('Normalize Update').first().json.chat_id } }];"
       },
       "name": "Build Reply",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-416, 400],
+      "position": [
+        -416,
+        400
+      ],
       "id": "w1-n9-buildreply"
     },
     {
       "parameters": {
-        "chatId": "={{ $json.chat_id }}",
-        "text": "={{ $json.reply_text }}",
+        "chatId": "={{ $('Build Reply').first().json.chat_id }}",
+        "text": "={{ $('Build Reply').first().json.reply_text }}",
         "additionalFields": {}
       },
       "name": "Send Reply",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [-192, 400],
+      "position": [
+        -192,
+        400
+      ],
       "id": "w1-n10-sendreply",
-      "credentials": { "telegramApi": { "id": "REPLACE_TELEGRAM_CRED", "name": "Telegram account" } }
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TELEGRAM_CRED",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $json.has_reply }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Has Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        400
+      ],
+      "id": "w1-n11-hasreply"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.voice_url }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Has Voice?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        400
+      ],
+      "id": "w1-n12-hasvoice"
+    },
+    {
+      "parameters": {
+        "operation": "sendAudio",
+        "chatId": "={{ $json.chat_id }}",
+        "file": "={{ $json.voice_url }}",
+        "additionalFields": {}
+      },
+      "name": "Send Voice Note",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        280
+      ],
+      "id": "w1-n13-sendvoice",
+      "credentials": {
+        "telegramApi": {
+          "id": "REPLACE_TELEGRAM_CRED",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
   "connections": {
-    "Telegram Trigger": { "main": [[ { "node": "Normalize Update", "type": "main", "index": 0 } ]] },
-    "Normalize Update": { "main": [[ { "node": "Message Type", "type": "main", "index": 0 } ]] },
-    "Message Type": {
+    "Telegram Trigger": {
       "main": [
-        [ { "node": "Download Photo", "type": "main", "index": 0 } ],
-        [ { "node": "Download Voice", "type": "main", "index": 0 } ],
-        [ { "node": "Run W3", "type": "main", "index": 0 } ]
+        [
+          {
+            "node": "Normalize Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Download Photo": { "main": [[ { "node": "Photo to Base64", "type": "main", "index": 0 } ]] },
-    "Photo to Base64": { "main": [[ { "node": "Run W3", "type": "main", "index": 0 } ]] },
-    "Download Voice": { "main": [[ { "node": "Voice to Base64", "type": "main", "index": 0 } ]] },
-    "Voice to Base64": { "main": [[ { "node": "Run W3", "type": "main", "index": 0 } ]] },
-    "Run W3": { "main": [[ { "node": "Build Reply", "type": "main", "index": 0 } ]] },
-    "Build Reply": { "main": [[ { "node": "Send Reply", "type": "main", "index": 0 } ]] }
+    "Normalize Update": {
+      "main": [
+        [
+          {
+            "node": "Message Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Type": {
+      "main": [
+        [
+          {
+            "node": "Download Photo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download Voice",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run W3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Photo": {
+      "main": [
+        [
+          {
+            "node": "Photo to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Photo to Base64": {
+      "main": [
+        [
+          {
+            "node": "Run W3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Voice": {
+      "main": [
+        [
+          {
+            "node": "Voice to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voice to Base64": {
+      "main": [
+        [
+          {
+            "node": "Run W3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run W3": {
+      "main": [
+        [
+          {
+            "node": "Build Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Reply": {
+      "main": [
+        [
+          {
+            "node": "Has Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Reply?": {
+      "main": [
+        [
+          {
+            "node": "Has Voice?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Has Voice?": {
+      "main": [
+        [
+          {
+            "node": "Send Voice Note",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Voice Note": {
+      "main": [
+        [
+          {
+            "node": "Send Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "active": false,
-  "settings": { "executionOrder": "v1" },
-  "meta": { "templateCredsSetupCompleted": false },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
   "id": "REPLACE_AFTER_IMPORT",
   "tags": []
 }
