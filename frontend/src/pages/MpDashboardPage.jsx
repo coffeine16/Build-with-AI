@@ -110,23 +110,19 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
 
     if (isComplete) {
       return {
-        borderColor: "var(--teal)",
-        backgroundColor: "rgba(16, 185, 129, 0.08)",
-        color: "#fff"
+        "--step-bg": "var(--brand-dark)",
+        "--step-border": "var(--brand-dark)",
+        "--step-fg": "#ffffff"
       };
     }
     if (isActive) {
       return {
-        borderColor: "var(--brand-light)",
-        backgroundColor: "rgba(94, 106, 210, 0.15)",
-        color: "#fff",
-        boxShadow: "0 0 10px rgba(94, 106, 210, 0.1)"
+        "--step-border": "var(--brand)",
+        "--step-fg": "var(--brand-dark)",
+        "--step-ring": "0 0 0 3px rgba(15, 107, 63, 0.15)"
       };
     }
-    return {
-      borderColor: "var(--line)",
-      opacity: 0.5
-    };
+    return { opacity: 0.55 };
   };
 
   const formatCost = (val) => {
@@ -141,7 +137,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
         <div>
           <p className="kicker">MP Executive Workspace</p>
           <h1>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--rose)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '10px'}}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{verticalAlign: 'middle', marginRight: '10px'}}>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             </svg>
             {session.fullName} | {session.constituency} Constituency
@@ -271,16 +267,16 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
           {!activeIssue && <p className="empty-state">Select an issue from the queue to process.</p>}
           {activeIssue && (
             <div className="stack">
-              <div className="tile" style={{ background: "rgba(255, 255, 255, 0.02)", borderStyle: "solid" }}>
+              <div className="issue-summary">
                 <div className="tile-head">
-                  <h3 style={{fontSize: "1.1rem", fontWeight: "600", color: "#fff"}}>{activeIssue.title}</h3>
+                  <h3>{activeIssue.title}</h3>
                 </div>
-                <p style={{ margin: "0.5rem 0", color: "var(--ink-muted)" }}>{activeIssue.mp_action}</p>
-                <div className="tile-inline" style={{ margin: "0.75rem 0" }}>
+                <p>{activeIssue.mp_action}</p>
+                <div className="tile-inline">
                   <Badge tone="slate">Scheme: {activeIssue.scheme_id.toUpperCase()}</Badge>
                   <Badge tone="green">Cost: {formatCost(activeIssue.est_cost_inr)}</Badge>
                 </div>
-                <div className="signal-row" style={{ marginTop: "0.5rem" }}>
+                <div className="signal-row">
                   <span className="signal-pill">{activeIssue.ward_name}</span>
                   <span className="signal-pill">{activeIssue.category}</span>
                   <span className="signal-pill">{activeIssue.n_submissions} citizens</span>
@@ -288,7 +284,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
               </div>
 
               <div>
-                <span className="muted" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Pipeline Stage Decision</span>
+                <span className="section-label">Pipeline Stage Decision</span>
                 <div className="button-grid">
                   <Button variant="outline" onClick={() => transitionIssue(activeIssue, "taken_up")} className={activeIssue.status === "taken_up" ? "border-brand" : ""}>
                     Take Up
@@ -322,7 +318,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
               </Button>
 
               <div>
-                <span className="muted" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.75rem", textTransform: "uppercase", fontWeight: "700", letterSpacing: "0.05em" }}>Constituency Stepper Status</span>
+                <span className="section-label">Constituency Stepper Status</span>
                 <div className="timeline">
                   <div className="timeline-step" style={getTimelineStepStyle(1, activeIssue.status)}>
                     <strong>Intake</strong>
