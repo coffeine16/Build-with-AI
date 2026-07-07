@@ -58,7 +58,7 @@
         "operation": "executeQuery",
         "query": "SELECT id FROM submissions WHERE channel_message_id = $1 AND $1 IS NOT NULL AND $1 <> '' LIMIT 1;",
         "options": {
-          "queryReplacement": "={{ $json.channel_message_id }}"
+          "queryReplacement": "={{ $json.channel_message_id || '' }}"
         }
       },
       "name": "Dedupe Check",
