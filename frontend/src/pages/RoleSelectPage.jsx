@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
-import { Badge, Card, Button } from "../components/ui";
+import { Badge, Card, Button, Seal } from "../components/ui";
 
 export default function RoleSelectPage() {
   return (
     <main className="screen role-screen">
       <nav className="home-nav" aria-label="Awaaz navigation">
         <div>
+          <Seal size={30} className="home-nav-seal" />
           <strong>Awaaz</strong>
           <span>Civic Intelligence Platform</span>
         </div>
       </nav>
 
       <section className="home-hero">
+        <Seal size={220} className="home-hero-watermark" ringed={false} />
         <div className="hero-copy">
           <p className="kicker">Core System Hub</p>
           <h1>Civic issue intelligence for faster constituency response.</h1>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { wards } from "../data/recommendations";
-import { Button, Card, Field } from "../components/ui";
+import { Button, Card, Field, Seal } from "../components/ui";
 
 export default function CitizenLoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ export default function CitizenLoginPage({ onLogin }) {
   return (
     <main className="screen screen-login">
       <Card className="auth-card citizen-auth-card">
+        <Seal size={40} className="auth-card-seal" />
         <p className="kicker">Client Access</p>
         <h1>Raise local issues with context</h1>
         <p className="subtitle">

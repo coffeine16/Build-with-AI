@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card, Field } from "../components/ui";
+import { Button, Card, Field, Seal } from "../components/ui";
 
 export default function MpLoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -32,6 +32,7 @@ export default function MpLoginPage({ onLogin }) {
   return (
     <main className="screen screen-login">
       <Card className="auth-card mp-auth-card">
+        <Seal size={40} className="auth-card-seal auth-card-seal-mp" />
         <p className="kicker">MP Cockpit Login</p>
         <h1>Constituency action workspace</h1>
         <p className="subtitle">Review priority signals and move issues from demand to execution.</p>

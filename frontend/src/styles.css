@@ -58,6 +58,23 @@ h3 {
   letter-spacing: 0;
 }
 
+.kicker {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.4rem;
+}
+
+.kicker::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 26px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--brand) 0 33%, var(--accent) 33% 66%, var(--rose) 66% 100%);
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -148,6 +165,11 @@ textarea:focus-visible,
   flex-wrap: wrap;
 }
 
+.home-nav-seal {
+  color: var(--brand-dark);
+  flex-shrink: 0;
+}
+
 .home-nav strong {
   font-size: 1.25rem;
   font-weight: 700;
@@ -180,6 +202,16 @@ textarea:focus-visible,
   box-shadow: var(--shadow);
   position: relative;
   overflow: hidden;
+}
+
+.home-hero-watermark {
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  color: var(--brand);
+  opacity: 0.06;
+  z-index: 0;
+  pointer-events: none;
 }
 
 .home-hero .hero-copy {
@@ -383,6 +415,16 @@ textarea:focus-visible,
 
 .citizen-auth-card {
   border-top: 4px solid var(--brand);
+}
+
+.auth-card-seal {
+  display: block;
+  margin: 0 auto 1rem;
+  color: var(--brand-dark);
+}
+
+.auth-card-seal-mp {
+  color: var(--sidebar-bg);
 }
 
 /* Role Grid */
