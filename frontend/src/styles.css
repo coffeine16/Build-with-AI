@@ -37,21 +37,9 @@ body {
   margin: 0;
   color: var(--ink);
   font-family: "Plus Jakarta Sans", Arial, sans-serif;
-  background: radial-gradient(circle at top, rgba(34, 197, 94, 0.08) 0%, #f6fef8 80%);
+  background: var(--bg);
   min-height: 100vh;
   overflow-x: hidden;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(rgba(22, 163, 74, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(22, 163, 74, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
-  mask-image: radial-gradient(circle at top, #000 40%, transparent 90%);
 }
 
 h1,
@@ -107,9 +95,7 @@ h3,
 .home-nav strong {
   font-size: 1.25rem;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--brand-dark) 40%, var(--brand));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--brand-dark);
 }
 
 .home-nav span {
@@ -134,25 +120,10 @@ h3,
   padding: clamp(1.5rem, 3.5vw, 2.5rem);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: 
-    linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(246, 254, 248, 0.95)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500' viewBox='0 0 900 500'%3E%3Cg fill='none' stroke='%2316a34a' stroke-opacity='.06'%3E%3Cpath d='M40 390 C190 230 286 360 430 196 S703 164 860 70' stroke-width='2'/%3E%3Cpath d='M60 120 H228 V292 H60 ZM318 86 H536 V300 H318 ZM616 132 H820 V352 H616 Z'/%3E%3Cpath d='M228 188 H318M536 198 H616M430 300 V388H710'/%3E%3C/g%3E%3Cg fill='%2316a34a' fill-opacity='.1'%3E%3Ccircle cx='60' cy='120' r='4'/%3E%3Ccircle cx='228' cy='188' r='4'/%3E%3Ccircle cx='536' cy='198' r='4'/%3E%3Ccircle cx='710' cy='388' r='4'/%3E%3C/g%3E%3C/svg%3E");
-  background-size: cover;
+  background: var(--surface);
   box-shadow: var(--shadow);
   position: relative;
   overflow: hidden;
-}
-
-.home-hero::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(22, 163, 74, 0.08) 0%, transparent 70%);
-  z-index: 0;
-  pointer-events: none;
 }
 
 .home-hero .hero-copy {
@@ -229,7 +200,6 @@ h3,
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  规律: var(--surface-soft);
   font-weight: 600;
   font-size: 0.88rem;
   color: var(--ink);
