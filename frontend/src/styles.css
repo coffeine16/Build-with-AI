@@ -72,6 +72,43 @@ textarea:focus-visible,
   width: 100%;
 }
 
+/* Masthead */
+.masthead {
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text-secondary);
+  border-bottom: 3px solid var(--accent);
+  font-size: 0.78rem;
+}
+
+.masthead-inner {
+  width: min(1340px, 100%);
+  margin: 0 auto;
+  padding: 0.5rem 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.masthead-mark {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ffffff;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.masthead-mark svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.masthead-tag {
+  color: var(--sidebar-text-secondary);
+}
+
 .screen {
   width: min(1340px, 100%);
   margin: 0 auto;
