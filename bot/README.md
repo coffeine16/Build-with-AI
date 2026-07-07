@@ -24,7 +24,7 @@ dedupe guard → hourly rate-limit → pending-ward check → ONE Gemini call
 ---
 
 ## IMPORT ORDER (must be 03 first)
-1. `03-process-submission-v3.json`
+1. `03-process-submission.json`
 2. `02-web-submit.json`
 3. `01-telegram-inbound.json`
 4. `01b-whatsapp-inbound.json`

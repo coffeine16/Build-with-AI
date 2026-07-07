@@ -25,7 +25,7 @@
 
 1. Run `db/patches/002_intake_v3.sql` in Supabase SQL Editor (pgvector,
    new columns, indexes).
-2. Import `03-process-submission-v3.json` (replace the old 03: deactivate/
+2. Import `03-process-submission.json` (replace the old 03: deactivate/
    delete old, import this, then re-select it in every "Run W3" node of
    01, 01b, 02).
 3. New placeholders in 03 v3:
