@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { categories, recommendations, statusLabels, statusOrder, wards } from "../data/recommendations";
 import { setMpIssueActions } from "../lib/storage";
-import { Badge, Button, Card, CountUp, Field } from "../components/ui";
+import { Badge, Button, Card, CountUp, Field, StandoutRibbon } from "../components/ui";
 
 function getDerivedStatus(issueId, issueActions) {
   return issueActions[issueId]?.status || "new";
@@ -282,6 +282,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
                   setNoteDraft(issue.notes || "");
                 }}
               >
+                <StandoutRibbon dpsClass={issue.dps_class} silentNeed={issue.silent_need} />
                 <div className="tile-head">
                   <strong>{issue.title}</strong>
                   <Badge tone={getStatusTone(issue.status)}>{statusLabels[issue.status]}</Badge>
@@ -314,6 +315,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
           {activeIssue && (
             <div className="stack">
               <div className="issue-summary">
+                <StandoutRibbon dpsClass={activeIssue.dps_class} silentNeed={activeIssue.silent_need} />
                 <div className="tile-head">
                   <h3>{activeIssue.title}</h3>
                 </div>

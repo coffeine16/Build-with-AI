@@ -117,6 +117,21 @@ export function Seal({ size = 24, className, ringed = true }) {
   );
 }
 
+export function Ribbon({ tone = "accent", children }) {
+  return <span className={cn("ribbon", `ribbon-${tone}`)}>{children}</span>;
+}
+
+/** One ribbon slot: a "High" DPS class wins over a silent-need flag so a tile never shows two. */
+export function StandoutRibbon({ dpsClass, silentNeed }) {
+  if (String(dpsClass).toLowerCase() === "high") {
+    return <Ribbon tone="accent">Priority</Ribbon>;
+  }
+  if (silentNeed) {
+    return <Ribbon tone="violet">Silent Need</Ribbon>;
+  }
+  return null;
+}
+
 export function Masthead() {
   return (
     <div className="masthead" role="banner">

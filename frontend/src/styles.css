@@ -1188,11 +1188,37 @@ textarea {
 
 /* Action center: selected issue summary */
 .issue-summary {
+  position: relative;
   border: 1px solid var(--line);
   border-left: 3px solid var(--brand);
   border-radius: var(--radius);
   background: var(--surface-soft);
   padding: 1rem;
+}
+
+/* Standout ribbon (priority / silent-need): an in-flow pennant tab
+   above the title, not an absolute corner overlay, since the tile-head
+   badges already occupy the top-right corner of every tile type. */
+.ribbon {
+  display: inline-flex;
+  align-items: center;
+  margin: -0.15rem 0 0.5rem -0.05rem;
+  padding: 0.22rem 0.75rem 0.22rem 0.6rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+  white-space: nowrap;
+}
+
+.ribbon-accent {
+  background: var(--accent);
+}
+
+.ribbon-violet {
+  background: var(--violet);
 }
 
 .issue-summary h3 {

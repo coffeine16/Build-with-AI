@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { recommendations } from "../data/recommendations";
 import { setCitizenSubmissions } from "../lib/storage";
-import { Badge, Button, Card, CountUp, Field } from "../components/ui";
+import { Badge, Button, Card, CountUp, Field, StandoutRibbon } from "../components/ui";
 
 export default function CitizenDashboardPage({ session, submissions, setSubmissions, onLogout }) {
   const [ackText, setAckText] = useState("");
@@ -226,6 +226,7 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
             )}
             {wardRecommendations.map((item) => (
               <article key={item.id} className="tile">
+                <StandoutRibbon dpsClass={item.dps_class} silentNeed={item.silent_need} />
                 <div className="tile-head">
                   <strong>{item.title}</strong>
                   <Badge tone={item.dps_class.toLowerCase() === "high" ? "orange" : "slate"}>
