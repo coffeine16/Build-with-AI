@@ -25,6 +25,20 @@ heard**, not just who shouted the most.
 
 ---
 
+## Live demo
+
+- **Dashboard (prototype link):** **https://awaaz-zeta.vercel.app** — pick
+  **MP View** (passcode `MP1234`) for the priority queue + ward map, or
+  **Client View** to file a report and watch it enter the queue.
+- **Telegram bot:** **[t.me/AwaazAIbot](https://t.me/AwaazAIbot)** — message it
+  a local issue by text or voice, in Hindi or English, and it replies with a
+  ticket, an entitlement tip, and (for critical issues) an alert.
+
+Dashboard is hosted on Vercel; the intake bot runs on n8n on a GCP VM, with
+Supabase as the shared datastore.
+
+---
+
 ## Try it in under a minute
 
 The dashboard runs entirely against mock data — no Supabase, no n8n,
@@ -212,7 +226,7 @@ Copy `.env.example` to `.env`: `DATABASE_URL`, `TELEGRAM_BOT_TOKEN`,
 ## Roadmap
 
 - [ ] Download and load real Jaipur ward boundaries (DataMeet / OpenCity)
-- [x] Deploy the full stack (Supabase + GCP VM + Vercel) — live at `https://awaaz.duckdns.org`
+- [x] Deploy the full stack (Supabase + GCP VM + Vercel) — dashboard live at [awaaz-zeta.vercel.app](https://awaaz-zeta.vercel.app), bot at [@AwaazAIbot](https://t.me/AwaazAIbot)
 - [ ] Replace the offline linear-regression hotspot model with a
       real trained model once genuine submission volume exists
 - [ ] WhatsApp production access (Meta app review)
