@@ -33,3 +33,23 @@ recommendations. Runs as a batch script, rerun every ~10 min.
 
 ## Depends on
 `submissions` (real or synthetic) + `evidence` rows must exist.
+
+## Basic hotspot model (implemented)
+
+`hotspot_model.py` is a very basic, working version of the step 6
+stretch goal — plain scikit-learn `LinearRegression` (not LightGBM;
+there isn't enough demo data yet for anything heavier) predicting
+expected submissions per ward from evidence features, then scoring
+wards where actual submissions fall short as hotspots. It runs
+offline against the static `frontend/mock_recommendations.json` and
+writes `frontend/src/data/wardHotspots.json` +
+`frontend/src/data/wardBoundaries.json` for the map — no database, no
+server, just:
+
+```
+python pipeline/hotspot_model.py
+```
+
+Re-run it after editing `mock_recommendations.json` to refresh the
+map. Swapping in a real model/real submission volume later means
+replacing this script's internals, not the frontend contract.
