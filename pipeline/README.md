@@ -1,7 +1,38 @@
 # Pipeline track
 
 The core IP: turns raw submissions into ranked, explainable, funded
-recommendations. Runs as a batch script, rerun every ~10 min.
+recommendations. Runs as a batch script, rerun on demand.
+
+## Running the real pipeline (`run.py`)
+
+`run.py` is the working implementation: it reads live `submissions` +
+`evidence` + ward attributes from Supabase, clusters demand into
+(ward, category) themes, computes the DPS deterministically, matches each
+theme to a funding scheme, and writes `themes` + `theme_submissions` +
+`recommendations` back to Supabase. The frontend reads those tables.
+
+```bash
+# 0. one-time: seed evidence + ward attributes (Supabase SQL Editor)
+#    run pipeline/seed_evidence.sql
+
+# 1. install deps
+pip install -r requirements.txt
+
+# 2. point at Supabase (session-pooler URI, Settings -> Database -> Connection string)
+export DATABASE_URL="postgresql://postgres.<ref>:<password>@<pooler-host>:5432/postgres"
+
+# 3. recompute (safe to re-run — it rebuilds themes/recommendations each time)
+python run.py
+```
+
+It prints a ranked summary. Re-run it whenever new submissions come in.
+The scoring is intentionally simple (group by ward+category, linear DPS) and
+honest about the demo data volume — swap in embedding-based clustering once
+there's real volume. `build_themes()` is pure (no DB), so the scoring can be
+unit-tested / dry-run without write access.
+
+---
+
 
 ## Build order
 
