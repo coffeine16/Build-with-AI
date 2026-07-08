@@ -1,0 +1,16 @@
+{
+  "id": "saubhagya",
+  "version": 1,
+  "config": {
+    "name": { "en": "Saubhagya / DDUGJY (Pradhan Mantri Sahaj Bijli Har Ghar Yojana)", "hi": "सौभाग्य / दीन दयाल उपाध्याय ग्राम ज्योति योजना (प्रधानमंत्री सहज बिजली हर घर योजना)" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "eq", "value": "electricity" },
+        { "field": "sub_type", "op": "in", "value": ["connection", "household_connection", "transformer", "pole", "wiring", "line_extension", "voltage", "power_supply"] }
+      ]
+    },
+    "mp_action": "Forward to the local DISCOM (Jaipur Vidyut Vitran Nigam — JVVNL) for last-mile connection / distribution-infrastructure work.",
+    "notes": "Household electrification and distribution infrastructure (transformers, poles, lines). Street-lighting is a municipal (ULB) subject, not this scheme."
+  },
+  "active": true
+}

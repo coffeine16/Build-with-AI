@@ -1,0 +1,16 @@
+{
+  "id": "swachh_bharat",
+  "version": 1,
+  "config": {
+    "name": { "en": "Swachh Bharat Mission (Urban) 2.0", "hi": "स्वच्छ भारत मिशन (शहरी) 2.0" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "eq", "value": "sanitation" },
+        { "field": "sub_type", "op": "in", "value": ["toilet", "public_toilet", "community_toilet", "open_defecation", "solid_waste", "garbage", "drainage", "sewage"] }
+      ]
+    },
+    "mp_action": "Forward to the Jaipur Nagar Nigam Swachh Bharat cell for inclusion in the city sanitation / solid-waste management plan.",
+    "notes": "Covers toilets (individual/community/public), solid-waste management, and drainage. Not for piped water supply — route those to AMRUT/JJM."
+  },
+  "active": true
+}

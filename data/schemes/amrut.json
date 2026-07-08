@@ -1,0 +1,16 @@
+{
+  "id": "amrut",
+  "version": 1,
+  "config": {
+    "name": { "en": "AMRUT 2.0 (Atal Mission for Rejuvenation and Urban Transformation)", "hi": "अटल नवीकरण एवं शहरी परिवर्तन मिशन (अमृत 2.0)" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "in", "value": ["water", "sanitation"] },
+        { "field": "sub_type", "op": "in", "value": ["piped_water_extension", "tap_connection", "water_quality", "sewerage", "drainage", "stormwater", "water_supply"] }
+      ]
+    },
+    "mp_action": "Forward to the Urban Local Body (Jaipur Nagar Nigam) / State AMRUT mission for inclusion in the city water supply & sewerage action plan.",
+    "notes": "Urban wards only — the urban counterpart to JJM. Best fit for Jaipur's municipal wards. Cite tap/sewerage coverage gap in the justification."
+  },
+  "active": true
+}

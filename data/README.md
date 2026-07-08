@@ -7,12 +7,17 @@ Zero dependencies on other tracks — start immediately.
 1. Download Jaipur ward boundaries (GeoJSON) from the DataMeet
    Municipal_Spatial_Data repo or OpenCity's Jaipur wards dataset. Save
    to `data/raw/`. Run `python scripts/load_wards.py data/raw/wards.geojson`.
-2. Scheme configs — already stubbed in `data/schemes/*.json`
-   (mplads, jjm, samagra_shiksha, pmgsy). Insert into the `schemes` table.
-   Add one Rajasthan state scheme if time allows (check
-   jansoochna.rajasthan.gov.in). Adding a new scheme = adding a JSON file
-   and one INSERT — this is the "30 second live demo" moment, so make sure
-   it stays that easy.
+2. Scheme configs — `data/schemes/*.json`. Eight schemes now cover the
+   full submission category set: **samagra_shiksha** (education),
+   **jjm** (rural water) + **amrut** (urban water/sewerage — the fit for
+   Jaipur's municipal wards), **pmgsy** (roads), **swachh_bharat**
+   (sanitation), **nhm** (health), **saubhagya** (electricity), and
+   **mplads** (the MP's own catch-all fund). Load them all into the
+   `schemes` table in one shot with `data/schemes/load_schemes.sql`
+   (idempotent upsert — paste into the Supabase SQL Editor). Adding a new
+   scheme = adding a JSON file + one block in that script — this is the
+   "30 second live demo" moment, so keep it that easy. (A Rajasthan state
+   scheme is still a good add if time allows — check jansoochna.rajasthan.gov.in.)
 3. Evidence data for your chosen demo wards only (don't try to cover all
    150 wards):
    - UDISE+ (udiseplus.gov.in) — district/block aggregate report card for

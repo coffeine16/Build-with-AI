@@ -1,0 +1,16 @@
+{
+  "id": "nhm",
+  "version": 1,
+  "config": {
+    "name": { "en": "National Health Mission — Ayushman Bharat Health & Wellness Centre", "hi": "राष्ट्रीय स्वास्थ्य मिशन — आयुष्मान भारत स्वास्थ्य एवं कल्याण केंद्र" },
+    "eligibility": {
+      "all": [
+        { "field": "category", "op": "eq", "value": "health" },
+        { "field": "sub_type", "op": "in", "value": ["infrastructure_repair", "sub_centre", "phc", "chc", "health_centre", "equipment", "staff", "drinking_water", "electricity"] }
+      ]
+    },
+    "mp_action": "Forward to the Chief Medical & Health Officer (CMHO) / District Health Society for inclusion in the NHM Programme Implementation Plan (PIP).",
+    "notes": "Public health sub-centres, PHCs/CHCs and health-and-wellness-centre upgrades. Cite population-per-facility or facility-condition gap in the justification."
+  },
+  "active": true
+}
