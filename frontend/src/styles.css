@@ -1200,6 +1200,60 @@ textarea {
   background: var(--brand-dark);
 }
 
+.ward-map-panel {
+  margin-bottom: 1.25rem;
+}
+
+/* Ward hotspot map */
+.ward-map-wrap {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.ward-map-shell {
+  height: 340px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.ward-map-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  flex-wrap: wrap;
+}
+
+.ward-map-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-left: 0.6rem;
+}
+
+.ward-map-swatch:first-child {
+  margin-left: 0;
+}
+
+.ward-map-note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.ward-map-note code {
+  font-size: 0.76rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0.05rem 0.3rem;
+}
+
 /* Metrics and details */
 .metric-row {
   display: grid;

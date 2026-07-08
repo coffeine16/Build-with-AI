@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { categories, recommendations, statusLabels, statusOrder, wards } from "../data/recommendations";
 import { setMpIssueActions } from "../lib/storage";
 import { Badge, Button, Card, CountUp, Field, StandoutRibbon } from "../components/ui";
+import { WardHotspotMap } from "../components/WardHotspotMap";
 
 function getDerivedStatus(issueId, issueActions) {
   return issueActions[issueId]?.status || "new";
@@ -220,6 +221,17 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
           </Card>
         ))}
       </section>
+
+      <Card className="panel-card ward-map-panel">
+        <div className="panel-heading">
+          <div>
+            <h2>Ward Hotspot Map</h2>
+            <p className="subtitle">Evidence vs. citizen submissions, ward by ward.</p>
+          </div>
+          <Badge tone="orange">Basic model</Badge>
+        </div>
+        <WardHotspotMap />
+      </Card>
 
       <section className="grid two mp-workbench">
         <Card className="panel-card">
