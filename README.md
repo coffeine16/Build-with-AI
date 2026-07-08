@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="Awaaz — People's Priorities" width="100%" />
+  <img src="https://raw.githubusercontent.com/coffeine16/Build-with-AI/main/assets/banner.svg" alt="Awaaz — People's Priorities" width="100%" />
 </p>
 
 <p align="center">
