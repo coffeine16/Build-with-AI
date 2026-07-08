@@ -64,5 +64,115 @@
     "mp_action": "Recommend to District Collector under MPLADS",
     "silent_need": false,
     "lat": 26.9050, "lng": 75.7690
+  },
+  {
+    "id": 4,
+    "title": "Public toilet block repair — Ward 5 basti area",
+    "ward_name": "Ward 5",
+    "category": "sanitation",
+    "dps": 48.6,
+    "dps_class": "Medium",
+    "n_submissions": 22,
+    "n_voice": 3,
+    "components": { "demand": 14.0, "evidence_gap": 16.6, "equity": 12.0, "recurrence": 6.0 },
+    "explanation": [
+      "Evidence gap +16.6 pts (only 1 functional toilet block for ~340 households)",
+      "Citizen demand +14.0 pts (22 citizens, 3 via voice)",
+      "Equity +12.0 pts (basti area under-served relative to ward average)",
+      "Recurrence +6.0 pts (raised in 4 of last 24 weeks)"
+    ],
+    "est_cost_inr": 420000,
+    "scheme_id": "mplads",
+    "mp_action": "Recommend to District Collector under MPLADS for sanitation asset repair",
+    "silent_need": false,
+    "lat": 26.8890, "lng": 75.7801
+  },
+  {
+    "id": 5,
+    "title": "Streetlight restoration after monsoon outage — Ward 6",
+    "ward_name": "Ward 6",
+    "category": "electricity",
+    "dps": 36.2,
+    "dps_class": "Low",
+    "n_submissions": 9,
+    "n_voice": 1,
+    "components": { "demand": 10.0, "evidence_gap": 9.0, "equity": 8.2, "recurrence": 9.0 },
+    "explanation": [
+      "Recurrence +9.0 pts (raised in 6 of last 24 weeks, seasonal pattern)",
+      "Citizen demand +10.0 pts (9 citizens)",
+      "Evidence gap +9.0 pts (moderate outage duration vs. ward baseline)",
+      "Equity +8.2 pts (no compounding deprivation signal)"
+    ],
+    "est_cost_inr": 180000,
+    "scheme_id": "mplads",
+    "mp_action": "Recommend to District Collector under MPLADS for electrical infrastructure repair",
+    "silent_need": false,
+    "lat": 26.9310, "lng": 75.7735
+  },
+  {
+    "id": 6,
+    "title": "Sub-health centre understaffed — Ward 9",
+    "ward_name": "Ward 9",
+    "category": "health",
+    "dps": 74.1,
+    "dps_class": "High",
+    "n_submissions": 14,
+    "n_voice": 9,
+    "components": { "demand": 12.0, "evidence_gap": 29.0, "equity": 22.1, "recurrence": 11.0 },
+    "explanation": [
+      "Evidence gap +29.0 pts (1 ANM covering a facility rated for 3, district health survey 2024)",
+      "Equity +22.1 pts (ward in bottom decile on amenity index)",
+      "Recurrence +11.0 pts (raised in 8 of last 24 weeks)",
+      "Citizen demand +12.0 pts (only 14 citizens raised it, but heavily up-weighted — under-voiced relative to measured need)"
+    ],
+    "est_cost_inr": 950000,
+    "scheme_id": "mplads",
+    "mp_action": "Recommend to District Health Officer via MPLADS discretionary allocation",
+    "silent_need": true,
+    "lat": 26.8459, "lng": 75.7642
+  },
+  {
+    "id": 7,
+    "title": "Handpump repair cluster — Ward 12",
+    "ward_name": "Ward 12",
+    "category": "water",
+    "dps": 58.9,
+    "dps_class": "Medium",
+    "n_submissions": 33,
+    "n_voice": 6,
+    "components": { "demand": 20.0, "evidence_gap": 18.0, "equity": 12.9, "recurrence": 8.0 },
+    "explanation": [
+      "Citizen demand +20.0 pts (33 citizens across 5 handpumps)",
+      "Evidence gap +18.0 pts (all 5 handpumps flagged non-functional, JJM 2024)",
+      "Equity +12.9 pts (peri-urban cluster below tap coverage baseline)",
+      "Recurrence +8.0 pts (raised in 5 of last 24 weeks)"
+    ],
+    "est_cost_inr": 260000,
+    "scheme_id": "jjm",
+    "mp_action": "Forward to district PHED for JJM handpump repair batch",
+    "silent_need": false,
+    "lat": 26.9430, "lng": 75.8210
+  },
+  {
+    "id": 8,
+    "title": "Culvert repair before monsoon — Ward 14",
+    "ward_name": "Ward 14",
+    "category": "roads",
+    "dps": 44.3,
+    "dps_class": "Low",
+    "n_submissions": 15,
+    "n_voice": 2,
+    "components": { "demand": 11.0, "evidence_gap": 14.0, "equity": 9.3, "recurrence": 10.0 },
+    "explanation": [
+      "Recurrence +10.0 pts (raised in 7 of last 24 weeks, worsens every monsoon)",
+      "Evidence gap +14.0 pts (culvert flagged structurally weak, PMGSY inspection)",
+      "Citizen demand +11.0 pts (15 citizens)",
+      "Equity +9.3 pts (moderate connectivity deficit)"
+    ],
+    "est_cost_inr": 380000,
+    "scheme_id": "pmgsy",
+    "mp_action": "Forward to PMGSY district implementation unit for culvert survey",
+    "silent_need": false,
+    "lat": 26.8720, "lng": 75.7395
   }
 ]
