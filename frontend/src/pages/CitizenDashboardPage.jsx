@@ -46,6 +46,26 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
 
   const webhookUrl = import.meta.env.VITE_SUBMIT_WEBHOOK_URL;
 
+  // Stable per-citizen key so repeat web submissions are recognized as the
+  // same person (W2 otherwise mints a throwaway web-<timestamp> each call,
+  // breaking status lookups and per-citizen dedupe/rate-limit).
+  const citizenKey = `web-${session.phone || session.fullName || "anon"}`;
+
+  // Resolve browser GPS only when the citizen opted in. Never blocks the
+  // submit: falls back to null coords on denial, error, or timeout.
+  const resolveCoords = () =>
+    new Promise((resolve) => {
+      if (!newIssue.shareLocation || !("geolocation" in navigator)) {
+        resolve({ lat: null, lng: null });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => resolve({ lat: null, lng: null }),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      );
+    });
+
   const submitIssue = async (event) => {
     event.preventDefault();
     setIsSubmitting(true);
@@ -54,17 +74,20 @@ export default function CitizenDashboardPage({ session, submissions, setSubmissi
       let acknowledgement = "Issue submitted. Your ward team has been notified.";
 
       if (webhookUrl) {
+        const { lat, lng } = await resolveCoords();
         const response = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          // Field names MUST match the n8n W2 "Normalize Web Body" contract
+          // (bot/workflows/02-web-submit.json): citizen_key, media_type,
+          // text, location_text, lat, lng. Anything else is ignored by W2.
           body: JSON.stringify({
-            role: "citizen",
-            ward_name: session.ward_name,
-            citizen_name: session.fullName,
-            phone: session.phone,
-            channel: newIssue.channel,
+            citizen_key: citizenKey,
+            media_type: "text", // web form is text-only; no audio/photo captured yet
             text: newIssue.message,
-            share_location: newIssue.shareLocation
+            location_text: session.ward_name, // pass the login ward as location context
+            lat,
+            lng
           })
         });
 

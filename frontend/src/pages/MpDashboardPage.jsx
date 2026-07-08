@@ -3,6 +3,7 @@ import { categories, recommendations, statusLabels, statusOrder, wards } from ".
 import { setMpIssueActions } from "../lib/storage";
 import { Badge, Button, Card, CountUp, Field, StandoutRibbon } from "../components/ui";
 import { WardHotspotMap } from "../components/WardHotspotMap";
+import { LiveSignals } from "../components/LiveSignals";
 
 function getDerivedStatus(issueId, issueActions) {
   return issueActions[issueId]?.status || "new";
@@ -66,6 +67,8 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIssueId, setActiveIssueId] = useState(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [notifyState, setNotifyState] = useState(null);
+  const notifyUrl = import.meta.env.VITE_NOTIFY_WEBHOOK_URL;
 
   const enriched = useMemo(() => {
     return recommendations
@@ -106,6 +109,28 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
 
   const activeIssue = filtered.find((item) => item.id === activeIssueId) || filtered[0] || null;
 
+  // Ping W4 so the citizen(s) behind this recommendation get messaged back
+  // on their own channel. W4 looks the recipients up by recommendation_id;
+  // if none are linked (e.g. a mock-only item), it silently no-ops.
+  const notifyCitizens = async (issue) => {
+    if (!notifyUrl) {
+      setNotifyState({ tone: "err", text: "Notify webhook not configured (VITE_NOTIFY_WEBHOOK_URL)." });
+      return;
+    }
+    setNotifyState({ tone: "pending", text: "Notifying the citizen…" });
+    try {
+      const res = await fetch(notifyUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recommendation_id: issue.id })
+      });
+      if (!res.ok) throw new Error("notify failed");
+      setNotifyState({ tone: "ok", text: `Citizen notification dispatched for "${issue.title}".` });
+    } catch {
+      setNotifyState({ tone: "err", text: "Could not reach the notify service. Status saved; citizen not messaged." });
+    }
+  };
+
   const transitionIssue = (issue, newStatus) => {
     const next = {
       ...issueActions,
@@ -117,6 +142,11 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
     };
     setIssueActions(next);
     setMpIssueActions(next);
+
+    // "Take Up" is the moment the citizen loop closes — message them back.
+    if (newStatus === "taken_up") {
+      notifyCitizens(issue);
+    }
   };
 
   const saveIssueNote = () => {
@@ -233,6 +263,8 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
         <WardHotspotMap />
       </Card>
 
+      <LiveSignals />
+
       <section className="grid two mp-workbench">
         <Card className="panel-card">
           <div className="panel-heading">
@@ -292,6 +324,7 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
                 onClick={() => {
                   setActiveIssueId(issue.id);
                   setNoteDraft(issue.notes || "");
+                  setNotifyState(null);
                 }}
               >
                 <StandoutRibbon dpsClass={issue.dps_class} silentNeed={issue.silent_need} />
@@ -359,6 +392,11 @@ export default function MpDashboardPage({ session, issueActions, setIssueActions
                     Park
                   </Button>
                 </div>
+                {notifyState && (
+                  <p className={notifyState.tone === "err" ? "error-text" : "ack"} style={{ marginTop: "0.75rem" }}>
+                    {notifyState.text}
+                  </p>
+                )}
               </div>
 
               <Field label="Administrative Actions & Notes">
