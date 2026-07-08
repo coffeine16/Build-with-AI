@@ -82,7 +82,7 @@ flowchart LR
     WA --> N8N
     WEB --> N8N
 
-    subgraph IN["Intake — n8n on EC2"]
+    subgraph IN["Intake — n8n on a GCP VM"]
         N8N["Shared brain workflow<br/>Gemini: intent + extraction + severity"]
     end
 
@@ -152,8 +152,8 @@ frontend/    React app: /citizen + /mp (+ mock_recommendations.json to build aga
 db/          schema.sql — the shared contract, read this first
 data/        Scheme configs (funding routes) + raw dataset downloads
 scripts/     load_wards.py, generate_synthetic_submissions.py
-deploy/      docker-compose (n8n + pipeline + caddy), Caddyfile, pipeline Dockerfile
-infra/       Terraform: EC2 t3.small + Elastic IP in ap-south-1
+deploy/      docker-compose (n8n + caddy), Caddyfile, deploy runbook
+infra/       gcloud runbook: GCP Compute Engine e2-small + static IP in asia-south1
 ```
 
 ---
@@ -167,12 +167,13 @@ finished:
 |---|---|
 | Multichannel intake (Telegram / WhatsApp / Web) | ✅ n8n workflows built, tested end-to-end with curl |
 | LLM extraction, severity, dedupe, rate limiting | ✅ one Gemini call per message |
+| Voice replies (TTS back to the citizen) | ✅ GCP Text-to-Speech wired in — the bot replies with a voice note, not just text |
 | DPS scoring formula | ✅ implemented, deterministic |
 | Silent-need / hotspot detection | ✅ basic scikit-learn model, runs offline, output committed |
 | MP dashboard + citizen portal | ✅ full React app, works standalone against mock data |
 | Ward hotspot map | ✅ working (Leaflet + OpenStreetMap, no API key) |
 | Real Jaipur ward boundaries | ⏳ placeholder illustrative polygons — real GeoJSON never downloaded (see `data/README.md`) |
-| Live backend (Supabase + EC2 + n8n) | ⏳ fully documented in `deploy/README.md`, not currently deployed |
+| Live backend (Supabase + GCP VM + n8n) | ✅ deployed on a GCP Compute Engine VM at `awaaz.duckdns.org` — runbook in `deploy/README.md` |
 | WhatsApp production credentials | ⏳ requires Meta app review |
 
 ---
@@ -211,7 +212,7 @@ Copy `.env.example` to `.env`: `DATABASE_URL`, `TELEGRAM_BOT_TOKEN`,
 ## Roadmap
 
 - [ ] Download and load real Jaipur ward boundaries (DataMeet / OpenCity)
-- [ ] Deploy the full stack (Supabase + EC2 + Vercel) and drop the live URL here
+- [x] Deploy the full stack (Supabase + GCP VM + Vercel) — live at `https://awaaz.duckdns.org`
 - [ ] Replace the offline linear-regression hotspot model with a
       real trained model once genuine submission volume exists
 - [ ] WhatsApp production access (Meta app review)
