@@ -976,17 +976,25 @@ textarea {
 /* Sidebar select dropdown inputs */
 .mp-workbench > .panel-card:first-child input,
 .mp-workbench > .panel-card:first-child select {
-  background: var(--sidebar-hover);
+  background-color: var(--sidebar-hover);
   border-color: rgba(255, 255, 255, 0.15);
   color: #ffffff;
+}
+
+/* Chevron only on the select — with explicit no-repeat so it doesn't tile.
+   (Using the shorthand `background` above would reset repeat/size/position.) */
+.mp-workbench > .panel-card:first-child select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a7f3d0'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem;
 }
 
 .mp-workbench > .panel-card:first-child input:focus,
 .mp-workbench > .panel-card:first-child select:focus {
   border-color: var(--line-strong);
   box-shadow: 0 0 0 3px rgba(185, 205, 184, 0.25);
-  background: rgba(22, 101, 52, 0.8);
+  background-color: rgba(22, 101, 52, 0.8);
 }
 
 .mp-workbench > .panel-card:first-child .ui-field > span {
