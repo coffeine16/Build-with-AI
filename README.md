@@ -172,26 +172,6 @@ infra/       gcloud runbook: GCP Compute Engine e2-small + static IP in asia-sou
 
 ---
 
-## What's real vs. prototype
-
-Being upfront about this is more convincing than pretending it's all
-finished:
-
-| Piece | Status |
-|---|---|
-| Multichannel intake (Telegram / WhatsApp / Web) | ✅ n8n workflows built, tested end-to-end with curl |
-| LLM extraction, severity, dedupe, rate limiting | ✅ one Gemini call per message |
-| Voice replies (TTS back to the citizen) | ✅ GCP Text-to-Speech wired in — the bot replies with a voice note, not just text |
-| DPS scoring formula | ✅ implemented, deterministic |
-| Silent-need / hotspot detection | ✅ basic scikit-learn model, runs offline, output committed |
-| MP dashboard + citizen portal | ✅ full React app, works standalone against mock data |
-| Ward hotspot map | ✅ working (Leaflet + OpenStreetMap, no API key) |
-| Real Jaipur ward boundaries | ⏳ placeholder illustrative polygons — real GeoJSON never downloaded (see `data/README.md`) |
-| Live backend (Supabase + GCP VM + n8n) | ✅ deployed on a GCP Compute Engine VM at `awaaz.duckdns.org` — runbook in `deploy/README.md` |
-| WhatsApp production credentials | ⏳ requires Meta app review |
-
----
-
 ## Full stack setup
 
 For the real intake → pipeline → Supabase → dashboard loop (not just
